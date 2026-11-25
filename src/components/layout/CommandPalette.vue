@@ -68,6 +68,9 @@ function choose(option: Option | undefined) {
   dialog.value?.close()
   option.run()
 }
+function restoreFocus() {
+  previous?.focus()
+}
 function navigate(event: KeyboardEvent) {
   const length = results.value.length
   if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(event.key)) return
@@ -88,7 +91,7 @@ defineExpose({ show })
 </script>
 
 <template>
-  <dialog ref="dialog" class="command" :aria-label="t('app.command')" @close="previous?.focus()">
+  <dialog ref="dialog" class="command" :aria-label="t('app.command')" @close="restoreFocus">
     <div class="command-search">
       <Search :size="20" />
       <input ref="input" v-model="query" role="combobox" aria-autocomplete="list" aria-expanded="true"

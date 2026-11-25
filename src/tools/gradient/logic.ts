@@ -28,7 +28,7 @@ export type GradientState = v.InferOutput<typeof schema>
 export type Stop = GradientState['stops'][number]
 export const sortedStops = (state: GradientState) => [...state.stops].sort((a, b) => a.position - b.position)
 export const polar = (value: string) => ['oklch', 'hsl', 'lch'].includes(value)
-export const newStop = (color: string, position: number, id = crypto.randomUUID()): Stop => ({ id, color, position, opacity: 100 })
+export const newStop = (color: string, position: number, id: string = crypto.randomUUID()): Stop => ({ id, color, position, opacity: 100 })
 
 function make(colors: string[], angle = 135): GradientState {
   return {

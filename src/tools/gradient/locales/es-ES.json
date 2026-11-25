@@ -1,0 +1,50 @@
+{
+  "type": "Tipo de gradiente",
+  "types": {
+    "linear": "Lineal",
+    "radial": "Radial",
+    "conic": "Cónico"
+  },
+  "interpolation": "Interpolación",
+  "default": "Predeterminada",
+  "hue": "Recorrido del tono",
+  "modes": {
+    "shorter": "Corto",
+    "longer": "Largo",
+    "increasing": "Creciente",
+    "decreasing": "Decreciente"
+  },
+  "shape": "Forma",
+  "circle": "Círculo",
+  "ellipse": "Elipse",
+  "size": "Extensión",
+  "sizes": {
+    "closest-side": "Lado más próximo",
+    "closest-corner": "Esquina más próxima",
+    "farthest-side": "Lado más lejano",
+    "farthest-corner": "Esquina más lejana"
+  },
+  "repeat": "Repetir",
+  "clip": "Aplicar al texto",
+  "angle": "Ángulo (°)",
+  "centerX": "Centro X (%)",
+  "centerY": "Centro Y (%)",
+  "stops": "Paradas de color",
+  "stop": "Parada",
+  "add": "Añadir parada",
+  "reverse": "Invertir",
+  "distribute": "Distribuir",
+  "position": "Posición (%)",
+  "hard": "Segunda posición",
+  "end": "Posición final (%)",
+  "hint": "Punto medio personalizado",
+  "hintPosition": "Punto medio (%)",
+  "presets": {
+    "sunset": "Atardecer",
+    "ocean": "Azul océano",
+    "aurora": "Aurora boreal",
+    "neon": "Neón",
+    "pastel": "Pastel suave",
+    "dark-mesh": "Malla oscura"
+  }
+}

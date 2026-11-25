@@ -1,0 +1,13 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.3.14/schema.json",
+  "files": { "includes": ["**", "!**/dist", "!**/pnpm-lock.yaml"] },
+  "html": { "experimentalFullSupportEnabled": true },
+  "css": { "parser": { "tailwindDirectives": true } },
+  "formatter": { "indentStyle": "space", "indentWidth": 2 },
+  "javascript": { "formatter": { "quoteStyle": "single", "semicolons": "asNeeded" } },
+  "linter": { "rules": { "recommended": true } },
+  "overrides": [{
+    "includes": ["**/*.vue"],
+    "linter": { "rules": { "correctness": { "noUnusedVariables": "off", "noUnusedImports": "off" } } }
+  }]
+}

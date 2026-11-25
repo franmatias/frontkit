@@ -1,0 +1,28 @@
+{
+  "linked": "Vincular los cuatro lados",
+  "top": "Superior",
+  "right": "Derecho",
+  "bottom": "Inferior",
+  "left": "Izquierdo",
+  "radius": "Radios de esquina",
+  "mode": "Modo",
+  "simple": "Simple",
+  "organic": "Orgánico",
+  "unit": "Unidad",
+  "tl": "Superior izquierda",
+  "tr": "Superior derecha",
+  "br": "Inferior derecha",
+  "bl": "Inferior izquierda",
+  "horizontal": "horizontal",
+  "vertical": "vertical",
+  "outline": "Contorno exterior",
+  "outlineWidth": "Ancho del contorno (px)",
+  "outlineOffset": "Desplazamiento (px)",
+  "presets": {
+    "pill": "Píldora",
+    "card": "Tarjeta estándar",
+    "circle": "Círculo",
+    "blob": "Forma orgánica",
+    "retro": "Marco doble retro"
+  }
+}

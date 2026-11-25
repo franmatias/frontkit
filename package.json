@@ -1,0 +1,52 @@
+{
+  "name": "frontkit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "packageManager": "pnpm@10.30.0",
+  "engines": {
+    "node": "^24.14.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "node scripts/licenses.mjs && vite build && node scripts/copy-404.mjs",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc --noEmit",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "test": "vitest",
+    "test:e2e": "playwright test",
+    "i18n:check": "node scripts/i18n-check.mjs",
+    "bundle:check": "node scripts/bundle-size.mjs"
+  },
+  "dependencies": {
+    "culori": "4.0.2",
+    "highlight.js": "11.11.1",
+    "idb": "8.0.3",
+    "lucide-vue-next": "0.468.0",
+    "lz-string": "1.5.0",
+    "pinia": "3.0.4",
+    "valibot": "1.2.0",
+    "vue": "3.5.44",
+    "vue-i18n": "11.2.8",
+    "vue-router": "4.6.4"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.11.1",
+    "@biomejs/biome": "2.3.14",
+    "@playwright/test": "1.58.2",
+    "@tailwindcss/vite": "4.1.17",
+    "@types/culori": "4.0.1",
+    "@types/node": "24.10.0",
+    "@vitejs/plugin-vue": "6.0.4",
+    "@vue/test-utils": "2.4.6",
+    "fake-indexeddb": "6.2.5",
+    "happy-dom": "20.5.0",
+    "tailwindcss": "4.1.17",
+    "typescript": "5.9.3",
+    "vite": "7.3.1",
+    "vitest": "4.0.18",
+    "vue-tsc": "3.2.4"
+  }
+}

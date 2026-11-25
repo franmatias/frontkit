@@ -1,0 +1,225 @@
+{
+  "app": {
+    "name": "FrontKit",
+    "catalog": "Catálogo",
+    "menu": "Menú",
+    "settings": "Configuración",
+    "about": "Acerca de",
+    "github": "GitHub",
+    "favorites": "Favoritos",
+    "all": "Todas",
+    "search": "Buscar herramientas",
+    "empty": "No hay resultados con estos filtros.",
+    "skip": "Saltar al contenido",
+    "close": "Cerrar",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "remove": "Eliminar",
+    "rename": "Renombrar",
+    "reset": "Restablecer",
+    "previous": "Subir",
+    "next": "Bajar",
+    "duplicate": "Duplicar",
+    "enabled": "Visible",
+    "theme": "Tema",
+    "command": "Buscar o ejecutar una acción",
+    "recent": "Recientes",
+    "actions": "Acciones",
+    "tools": "Herramientas",
+    "collapse": "Contraer navegación",
+    "expand": "Expandir navegación",
+    "changeTheme": "Cambiar tema",
+    "openSettings": "Abrir configuración"
+  },
+  "home": {
+    "eyebrow": "CSS · TAILWIND",
+    "title": "Herramientas para diseñar en la web",
+    "summary": "Ajusta el resultado en la vista previa y llévate el código a tu proyecto.",
+    "search": "Busca por nombre o categoría",
+    "tailwind": "Con salida Tailwind",
+    "favorites": "Solo favoritos",
+    "available": "Disponibles",
+    "planned": "Próximamente"
+  },
+  "status": {
+    "available": "Disponible",
+    "beta": "Beta",
+    "coming-soon": "Próximamente"
+  },
+  "category": {
+    "code": "Código",
+    "color-tokens": "Color y tokens",
+    "layout": "Maquetación",
+    "effects": "Efectos",
+    "animation": "Animación",
+    "optimization": "Optimización"
+  },
+  "settings": {
+    "appearance": "Apariencia",
+    "language": "Idioma",
+    "spanish": "Español",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema",
+    "storage": "Almacenamiento",
+    "storageHelp": "FrontKit guarda los datos en este navegador. Puede solicitar almacenamiento persistente al guardar por primera vez.",
+    "estimate": "Uso del origen",
+    "export": "Exportar copia",
+    "import": "Importar copia",
+    "replace": "Reemplazar datos",
+    "merge": "Combinar datos",
+    "records": "Registros detectados",
+    "clear": "Limpiar estados de herramientas",
+    "factory": "Restablecer todos los datos",
+    "confirmClear": "¿Limpiar los estados guardados de las herramientas?",
+    "confirmFactory": "¿Eliminar todos los datos locales de FrontKit?",
+    "invalid": "No se ha podido leer esta copia de seguridad.",
+    "done": "Cambios guardados.",
+    "editor": "Editor",
+    "fontSize": "Tamaño de letra",
+    "tabSize": "Espacios de tabulación",
+    "wordWrap": "Ajuste de línea",
+    "minimap": "Minimapa",
+    "autoRun": "Ejecución automática",
+    "autoRunDelayMs": "Espera de ejecución (ms)",
+    "preferences": "Preferencias de generadores",
+    "autoCopyOnClick": "Copiar al pulsar el código",
+    "showTailwindByDefault": "Mostrar Tailwind primero",
+    "colorContrastMethod": "Método de contraste",
+    "defaultColorFormat": "Formato de color",
+    "defaultUnit": "Unidad"
+  },
+  "about": {
+    "summary": "FrontKit es una colección abierta de herramientas de desarrollo web que funcionan en tu navegador.",
+    "privacy": "Privacidad",
+    "privacyBody": "FrontKit no usa telemetría, cookies ni servicios de terceros durante la ejecución. Los proyectos y preferencias se guardan localmente.",
+    "license": "Licencia MIT",
+    "dependencies": "Licencias y atribuciones",
+    "unavailable": "Las atribuciones se generan al compilar la aplicación."
+  },
+  "tool": {
+    "controls": "Controles",
+    "preview": "Vista previa",
+    "output": "Código generado",
+    "css": "CSS",
+    "tailwind": "Tailwind",
+    "copy": "Copiar",
+    "download": "Descargar",
+    "copied": "Copiado al portapapeles.",
+    "copyError": "No se pudo acceder al portapapeles.",
+    "lines": "líneas",
+    "chars": "caracteres",
+    "random": "Aleatorio",
+    "undo": "Deshacer",
+    "redo": "Rehacer",
+    "share": "Compartir enlace",
+    "shareError": "El enlace no es válido o supera el tamaño permitido.",
+    "shareLoaded": "Estado cargado desde un enlace",
+    "keep": "Conservar",
+    "discard": "Descartar",
+    "presets": "Presets",
+    "custom": "Guardar preset",
+    "presetName": "Nombre del preset",
+    "exportPreset": "Exportar preset",
+    "resetError": "No se pudo cargar la herramienta.",
+    "retry": "Reintentar",
+    "corrupt": "Se ha recuperado el estado inicial.",
+    "storageError": "No se pudieron guardar los datos. Puedes exportar una copia desde Configuración.",
+    "memory": "El almacenamiento local no está disponible. Los cambios duran hasta que cierres la página.",
+    "unsupported": "Este navegador no admite el estilo de la vista previa. Puedes copiar el código.",
+    "white": "Blanco",
+    "black": "Oscuro",
+    "checker": "Ajedrez",
+    "background": "Fondo de vista previa",
+    "customBackground": "Personalizado",
+    "planned": "Esta herramienta está prevista para una próxima etapa.",
+    "back": "Volver al catálogo",
+    "missing": "No se ha encontrado esta página",
+    "color": "Color",
+    "opacity": "Opacidad",
+    "width": "Ancho",
+    "style": "Estilo",
+    "sample": "Texto de muestra",
+    "sort": "Reordenar",
+    "confirmReset": "¿Restablecer los controles de esta herramienta?"
+  },
+  "tools": {
+    "playground": {
+      "name": "Playground HTML, CSS y JS",
+      "description": "Edita y ejecuta código en una vista previa aislada.",
+      "tags": {
+        "main": "Playground HTML, CSS y JS"
+      }
+    },
+    "gradient": {
+      "name": "Gradientes",
+      "description": "Combina colores y genera degradados lineales, radiales o cónicos.",
+      "tags": {
+        "main": "Gradientes"
+      }
+    },
+    "shadow": {
+      "name": "Sombras",
+      "description": "Compón sombras de caja y de texto con varias capas.",
+      "tags": {
+        "main": "Sombras"
+      }
+    },
+    "border": {
+      "name": "Bordes y radios",
+      "description": "Diseña marcos, esquinas y contornos con precisión.",
+      "tags": {
+        "main": "Bordes y radios"
+      }
+    },
+    "layout": {
+      "name": "Grid y Flexbox",
+      "description": "Construye diseños adaptables con CSS Grid y Flexbox.",
+      "tags": {
+        "main": "Grid y Flexbox"
+      }
+    },
+    "palette": {
+      "name": "Paletas de color",
+      "description": "Explora armonías, escalas cromáticas y contraste.",
+      "tags": {
+        "main": "Paletas de color"
+      }
+    },
+    "tokens": {
+      "name": "Tokens de diseño",
+      "description": "Define los colores, la tipografía y el espaciado de tu sistema.",
+      "tags": {
+        "main": "Tokens de diseño"
+      }
+    },
+    "transform": {
+      "name": "Transformaciones",
+      "description": "Combina transformaciones CSS en dos y tres dimensiones.",
+      "tags": {
+        "main": "Transformaciones"
+      }
+    },
+    "filter": {
+      "name": "Filtros",
+      "description": "Ajusta filtros CSS y compara el resultado en una imagen.",
+      "tags": {
+        "main": "Filtros"
+      }
+    },
+    "animation": {
+      "name": "Animaciones",
+      "description": "Diseña fotogramas y curvas de animación CSS.",
+      "tags": {
+        "main": "Animaciones"
+      }
+    },
+    "css-minifier": {
+      "name": "Minificador CSS",
+      "description": "Limpia y reduce el tamaño de tus hojas de estilo.",
+      "tags": {
+        "main": "Minificador CSS"
+      }
+    }
+  }
+}

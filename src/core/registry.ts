@@ -22,10 +22,10 @@ const planned = () => import('../views/ComingSoonView.vue').then(module => modul
 export const tools: ToolDefinition[] = [
   {
     id: 'playground', category: 'code', icon: Code2, phase: "1b",
-    status: 'coming-soon', featured: false,
+    status: 'beta', featured: false,
     supportsTailwind: false, supportsShareUrl: true,
     minViewport: 'tablet', tags: ['tools.playground.tags.main'],
-    component: planned,
+    component: () => import('../tools/playground/index.vue').then(module => module.default),
   },
   {
     id: 'gradient', category: 'color-tokens', icon: Blend, phase: "1a",

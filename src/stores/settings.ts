@@ -9,7 +9,7 @@ const schema = v.strictObject({
   locale: v.literal('es-ES'),
   editor: v.strictObject({
     fontSize: range(10, 32), tabSize: range(1, 8), wordWrap: v.boolean(),
-    minimap: v.boolean(), autoRun: v.boolean(), autoRunDelayMs: range(100, 5000),
+    minimap: v.boolean(), autoRun: v.boolean(), loopProtection: v.optional(v.boolean(), true), autoRunDelayMs: range(100, 5000),
   }),
   preferences: v.strictObject({
     defaultColorFormat: v.picklist(['hex', 'rgb', 'hsl', 'oklch']),
@@ -21,7 +21,7 @@ export type Settings = v.InferOutput<typeof schema>
 
 const defaults = (): Settings => ({
   theme: 'system', locale: 'es-ES',
-  editor: { fontSize: 14, tabSize: 2, wordWrap: true, minimap: false, autoRun: false, autoRunDelayMs: 600 },
+  editor: { fontSize: 14, tabSize: 2, wordWrap: true, minimap: false, autoRun: false, loopProtection: true, autoRunDelayMs: 350 },
   preferences: {
     defaultColorFormat: 'hex', defaultUnit: 'px', autoCopyOnClick: false,
     showTailwindByDefault: false, colorContrastMethod: 'wcag',

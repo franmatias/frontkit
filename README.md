@@ -9,9 +9,12 @@ FrontKit es una suite de herramientas front-end que se ejecuta en el navegador. 
 | Gradientes | `/tools/gradient` | Beta |
 | Sombras | `/tools/shadow` | Beta |
 | Bordes y radios | `/tools/border` | Beta |
-| Playground, Layout, Paleta, Tokens, Transform, Filter, Animation y CSS Minifier | Catálogo | Planificadas |
+| Playground HTML, CSS y JS | `/tools/playground` | Beta |
+| Layout, Paleta, Tokens, Transform, Filter, Animation y CSS Minifier | Catálogo | Planificadas |
 
 Los generadores beta ofrecen vista previa, CSS y Tailwind, favoritos, presets y enlaces compartidos. `Ctrl/Cmd+K` abre la búsqueda global.
+
+El Playground permite ejecutar los tres paneles, inspeccionar la consola, guardar proyectos locales y exportar HTML o JSON. La edición básica utiliza áreas de texto. La integración de Monaco, sus workers y Emmet sigue pendiente.
 
 ## Desarrollo
 
@@ -23,7 +26,7 @@ pnpm install
 pnpm dev
 ```
 
-La primera instalación debe generar `pnpm-lock.yaml`. Incorpóralo al repositorio para que la CI y los clones puedan usar `pnpm install --frozen-lockfile`.
+El lockfile está versionado. Usa `pnpm install --frozen-lockfile` para reproducir la instalación de CI.
 
 ```sh
 pnpm lint
@@ -38,7 +41,7 @@ pnpm test:e2e
 
 ## Despliegue
 
-El destino previsto es [franmatias.github.io/frontkit](https://franmatias.github.io/frontkit/). Selecciona **GitHub Actions** en la configuración de Pages. El flujo de `main` publica `dist/`. Las rutas directas devuelven el documento de la aplicación con estado HTTP 404 en Pages. Para un fork puedes ajustar `VITE_BASE`.
+El sitio se publica en [franmatias.github.io/frontkit](https://franmatias.github.io/frontkit/). El flujo de `main` publica `dist/`. Las rutas directas devuelven el documento de la aplicación con estado HTTP 404 en Pages. Para un fork puedes ajustar `VITE_BASE`.
 
 ## Privacidad y licencia
 

@@ -81,6 +81,7 @@
     "wordWrap": "Ajuste de línea",
     "minimap": "Minimapa",
     "autoRun": "Ejecución automática",
+    "loopProtection": "Proteger frente a bucles infinitos",
     "autoRunDelayMs": "Espera de ejecución (ms)",
     "preferences": "Preferencias de generadores",
     "autoCopyOnClick": "Copiar al pulsar el código",

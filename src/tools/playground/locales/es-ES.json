@@ -7,7 +7,7 @@
   "parse": "El analizador no ha podido instrumentar este JavaScript. Consulta la consola para ver los errores.",
   "conflict": "Otra pestaña ha actualizado este proyecto mientras lo editabas.",
   "mobile": "La edición de varias columnas está disponible en pantallas grandes.",
-  "guard": "La ejecución anterior quedó interrumpida. Pulsa Ejecutar para reanudar.",
+  "guard": "La vista previa se ha pausado tras una ejecución interrumpida.",
   "run": "Ejecutar",
   "projects": "Proyectos",
   "template": "Plantilla",
@@ -30,5 +30,16 @@
   "warnings": "avisos",
   "level": "Nivel",
   "search": "Buscar en la consola",
-  "clear": "Limpiar"
+  "clear": "Limpiar",
+  "resume": "Reanudar vista previa",
+  "expand": "Desplegar",
+  "fold": "Plegar",
+  "layoutNames": {
+    "quad": "Cuadrícula",
+    "side": "Vista a la derecha",
+    "left": "Vista a la izquierda",
+    "columns": "Vista debajo",
+    "bottom": "Vista encima",
+    "tabs": "Pestañas"
+  }
 }

@@ -3,12 +3,12 @@ import { safeJson } from '../../core/storage/backup'
 import { defineTool } from '../../core/tool'
 
 export const languages = ['html', 'css', 'js'] as const
-export const layouts = ['columns', 'side', 'tabs'] as const
+export const layouts = ['quad', 'side', 'left', 'columns', 'bottom', 'tabs'] as const
 const code = v.pipe(v.string(), v.maxLength(120_000))
 const schema = v.strictObject({ html: code, css: code, js: code, layout: v.picklist(layouts) })
 export type Source = v.InferOutput<typeof schema>
 export const templates: Record<string, Source> = {
-  blank: { html: '', css: '', js: '', layout: 'tabs' },
+  blank: { html: '', css: '', js: '', layout: 'quad' },
   card: { html: '<article><h1>FrontKit</h1><p>HTML · CSS · JS</p></article>',
     css: 'body { background: #e8f3e8; font: 16px system-ui; }\narticle { background: white; margin: 2rem; padding: 2rem; border-radius: 1rem; transition: transform .3s; }\narticle:hover { transform: translateY(-4px); }',
     js: '', layout: 'tabs' },

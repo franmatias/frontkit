@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import CodeEditor from './CodeEditor.vue'
+import { ChevronDown, Columns2, LayoutGrid, PanelLeft, PanelRight, Rows2, PanelsTopLeft, Terminal } from 'lucide-vue-next'
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -22,6 +24,11 @@ const project = shallowRef(createProject(label('untitled'), logic.defaultState()
 const projects = shallowRef<Project[]>([])
 const active = ref<(typeof languages)[number]>('html')
 const template = ref('card')
+const folded = ref({ html: false, css: false, js: false })
+const layoutIcons = { quad: LayoutGrid, side: PanelRight, left: PanelLeft, columns: Rows2, bottom: PanelsTopLeft, tabs: Columns2 }
+const consoleOpen = ref(true)
+const errors = computed(() => logs.value.filter(row => row.level === 'error'))
+const warnings = computed(() => logs.value.filter(row => row.level === 'warn'))
 const preview = ref<HTMLIFrameElement>()
 const previewHtml = ref('')
 const ready = ref(false)
@@ -90,8 +97,6 @@ function edit(patch: Partial<Source>) {
   project.value = { ...project.value, ...patch, updatedAt: Date.now() }
   dirty.value = true
   saveSoon()
-  clearTimeout(runTimer)
-  if (store.data.editor.autoRun && !blocked.value) runTimer = setTimeout(() => { void run() }, store.data.editor.autoRunDelayMs)
 }
 function clearPreview() {
   clearTimeout(runTimer)
@@ -169,17 +174,24 @@ watch(() => route.hash, hash => { if (ready.value) void loadLink(hash) })
 
 async function run() {
   if (!ready.value) return
-  clearPreview()
-  const revision = runVersion
-  blocked.value = false
+  const revision = ++runVersion
   const token = crypto.randomUUID()
   const doc = previewDocument(sourceOnly(project.value), token, store.data.editor.loopProtection, label('loop'))
   try { await write('meta', flag, true) } catch { return }
   if (disposed || revision !== runVersion) return
+  logs.value = []
   nonce = token
   result.value = doc.parsed ? '' : label('parse')
   previewHtml.value = doc.html
 }
+// Changing the layout or folding an editor must preserve the running preview.
+watch([ready, blocked, shared, () => project.value.id, () => project.value.html, () => project.value.css, () => project.value.js], () => {
+  clearTimeout(runTimer)
+  runVersion++
+  if (ready.value && !blocked.value && !shared.value) {
+    runTimer = setTimeout(() => { void run() }, store.data.editor.autoRunDelayMs)
+  }
+})
 function receive(event: MessageEvent) {
   const msg = event.data
   if (!nonce || event.source !== preview.value?.contentWindow || !msg || msg.nonce !== nonce || typeof msg.text !== 'string') return
@@ -192,7 +204,8 @@ function resize(event: PointerEvent) {
   const target = event.currentTarget as HTMLElement
   if (!target.hasPointerCapture(event.pointerId) || !area.value) return
   const box = area.value.getBoundingClientRect()
-  ratio.value = Math.max(25, Math.min(75, Math.round(100 * (event.clientX - box.left) / box.width)))
+  const fromLeft = 100 * (event.clientX - box.left) / box.width
+  ratio.value = Math.max(25, Math.min(75, Math.round(layout.value === 'left' ? 100 - fromLeft : fromLeft)))
 }
 function paletteAction(event: Event) {
   if (!(event instanceof CustomEvent) || !ready.value) return
@@ -202,7 +215,6 @@ function paletteAction(event: Event) {
 }
 function shortcut(event: KeyboardEvent) {
   if (!(event.ctrlKey || event.metaKey)) return
-  if (event.key === 'Enter') { event.preventDefault(); void run() }
   if (event.key.toLowerCase() === 's') { event.preventDefault(); if (shared.value) keep(); dirty.value = true; void persist().catch(() => {}) }
 }
 function visibility() { if (document.hidden) void persist().catch(() => {}) }
@@ -236,7 +248,6 @@ onMounted(async () => {
   if (disposed) return
   ready.value = true
   await loadLink(route.hash)
-  if (!disposed && store.data.editor.autoRun && !shared.value && !blocked.value && !route.hash) void run()
 })
 onUnmounted(() => {
   disposed = true
@@ -253,15 +264,15 @@ onUnmounted(() => {
 <template>
   <div class="workspace">
     <h1>{{ t('tools.playground.name') }}</h1>
-    <p v-if="small" class="notice">{{ label('mobile') }}</p>
-    <p v-if="blocked" class="notice">{{ label('guard') }}</p>
+
+    <div v-if="blocked" class="notice actions">{{ label('guard') }} <button class="btn" type="button" @click="blocked = false">{{ label('resume') }}</button></div>
     <div v-if="shared" class="notice actions">{{ t('tool.shareLoaded') }}
       <button class="btn" type="button" @click="keep">{{ t('tool.keep') }}</button>
       <button class="btn" type="button" @click="discard">{{ t('tool.discard') }}</button>
     </div>
-    <fieldset :disabled="!ready" class="panel workspace">
-      <div class="panel-top"><h2>{{ project.name }}</h2>
-        <button class="btn primary" type="button" @click="run">{{ label('run') }}</button></div>
+    <fieldset :disabled="!ready" class="studio">
+      <div class="studio-toolbar"><h2>{{ project.name }}</h2>
+        <div class="actions"><button class="btn" type="button" @click="share">{{ t('tool.share') }}</button><button class="btn" type="button" @click="exportFile(true)">{{ label('exportHtml') }}</button><button class="btn" type="button" @click="exportFile(false)">{{ label('exportJson') }}</button></div></div>
       <details>
         <summary>{{ label('projects') }}</summary>
         <div class="actions project-actions">
@@ -277,49 +288,84 @@ onUnmounted(() => {
           <label>{{ label('import') }} <input type="file" accept=".json" @change="imported" /></label>
         </div>
       </details>
-      <div class="actions">
-        <label v-if="!small">{{ label('layout') }}<select :value="project.layout" @change="edit({layout: ($event.target as HTMLSelectElement).value as Source['layout']})">
-          <option v-for="option in layouts" :key="option" :value="option">{{ label(option) }}</option>
-        </select></label>
-        <button type="button" class="btn" @click="share">{{ t('tool.share') }}</button>
-        <button type="button" class="btn" @click="exportFile(true)">{{ label('exportHtml') }}</button>
-        <button type="button" class="btn" @click="exportFile(false)">{{ label('exportJson') }}</button>
-      </div>
       <p v-if="large" class="notice" role="status">{{ label('large') }}</p>
-      <div ref="area" class="play-area" :class="'play-' + layout" :style="{'--split':ratio+'%'}">
+      <div v-if="!small" class="layout-picker" role="group" :aria-label="label('layout')">
+        <strong>{{ label('layout') }}</strong>
+        <button v-for="option in layouts" :key="option" class="btn" type="button" :aria-pressed="layout === option" @click="edit({layout:option})">
+          <component :is="layoutIcons[option]" :size="16" />{{ label('layoutNames.' + option) }}
+        </button>
+      </div>
+      <div v-if="layout === 'tabs'" class="actions language-tabs">
+        <button v-for="lang in languages" :key="lang" class="btn" type="button" :aria-pressed="active === lang" @click="active = lang">{{ lang.toUpperCase() }}</button>
+      </div>
+      <div ref="area" class="play-area" :class="['play-' + layout, { 'active-folded':folded[active], 'first-folded':folded.html && folded.css, 'all-folded':languages.every(lang => folded[lang]) }]" :style="{'--split':ratio+'%'}">
         <div class="editors">
-          <div v-if="layout === 'tabs'" class="actions"><button v-for="lang in languages" :key="lang" type="button" class="btn" :aria-pressed="lang === active" @click="active = lang">{{ lang.toUpperCase() }}</button></div>
-          <label v-for="lang in languages" v-show="layout !== 'tabs' || active === lang" :key="lang" class="editor">{{ lang.toUpperCase() }}
-            <textarea spellcheck="false" maxlength="120000" :value="project[lang]" :wrap="store.data.editor.wordWrap ? 'soft' : 'off'" :style="{fontSize:store.data.editor.fontSize+'px',tabSize:store.data.editor.tabSize}" @input="edit({[lang]:($event.target as HTMLTextAreaElement).value})" />
-          </label>
+          <section v-for="lang in languages" v-show="layout !== 'tabs' || active === lang" :key="lang" class="code-pane" :class="{'is-folded':folded[lang]}" @focusin="active = lang">
+            <button type="button" class="pane-heading" :aria-expanded="!folded[lang]" :aria-controls="'source-'+lang" :aria-label="label(folded[lang] ? 'expand' : 'fold') + ' ' + lang.toUpperCase()" @click="folded[lang] = !folded[lang]">
+              <span class="language-dot" :class="'dot-'+lang" />{{ lang.toUpperCase() }}<ChevronDown :size="16" />
+            </button>
+            <CodeEditor v-show="!folded[lang]" :id="'source-'+lang" :language="lang" :value="project[lang]" :wrap="store.data.editor.wordWrap" :font-size="store.data.editor.fontSize" :tab-size="store.data.editor.tabSize" @change="edit({[lang]:$event})" />
+          </section>
         </div>
-        <div v-if="layout === 'side'" class="divider" role="separator" tabindex="0" aria-orientation="vertical" :aria-label="label('split')" aria-valuemin="25" aria-valuemax="75" :aria-valuenow="ratio"
+        <div v-if="layout === 'side' || layout === 'left'" class="divider" role="separator" tabindex="0" aria-orientation="vertical" :aria-label="label('split')" aria-valuemin="25" aria-valuemax="75" :aria-valuenow="ratio"
           @pointerdown="($event.currentTarget as HTMLElement).setPointerCapture($event.pointerId)" @pointermove="resize"
-          @keydown.left.prevent="ratio = Math.max(25,ratio-5)" @keydown.right.prevent="ratio = Math.min(75,ratio+5)" />
+          @keydown.left.prevent="ratio = Math.max(25,Math.min(75,ratio+(layout === 'left' ? 5 : -5)))" @keydown.right.prevent="ratio = Math.max(25,Math.min(75,ratio+(layout === 'left' ? -5 : 5)))" />
         <section class="result"><h3>{{ t('tool.preview') }}</h3>
           <iframe ref="preview" :key="previewHtml ? nonce : 'empty'" sandbox="allow-scripts allow-modals allow-forms" :title="t('tool.preview')" :srcdoc="previewHtml" />
         </section>
       </div>
       <p v-if="result" class="notice" role="status">{{ result }}</p>
-      <details open><summary>{{ label('console') }} · {{ logs.filter(l => l.level === 'error').length }} {{ label('errors') }} · {{ logs.filter(l => l.level === 'warn').length }} {{ label('warnings') }}</summary>
+      <section class="console-pane"><button class="console-title" type="button" :aria-expanded="consoleOpen" aria-controls="play-console" @click="consoleOpen = !consoleOpen"><Terminal :size="17" />{{ label('console') }}<small>{{ errors.length }} {{ label('errors') }} · {{ warnings.length }} {{ label('warnings') }}</small><ChevronDown :size="16" /></button>
+        <div v-show="consoleOpen" id="play-console">
         <div class="actions project-actions"><label>{{ label('level') }}<select v-model="filter"><option value="">{{ t('app.all') }}</option><option v-for="level in levels.filter(l => l !== 'clear')" :key="level">{{ level }}</option></select></label>
           <input v-model="search" type="search" :placeholder="label('search')" :aria-label="label('search')" />
           <button class="btn" type="button" @click="logs = []">{{ label('clear') }}</button></div>
-        <ol class="console-output"><li v-for="row in shown" :key="row.id"><strong>{{ row.level }}</strong> {{ row.text }}</li></ol>
-        <span class="sr-only" aria-live="polite">{{ logs.filter(l => l.level === 'error').at(-1)?.text }}</span>
-      </details>
+        <ol class="console-output"><li v-for="row in shown" :key="row.id"><strong :class="'log-' + row.level">{{ row.level }}</strong> {{ row.text }}</li></ol>
+        <span class="sr-only" aria-live="polite">{{ errors.at(-1)?.text }}</span>
+        </div>
+      </section>
     </fieldset>
   </div>
 </template>
 <style scoped>
-.project-actions { margin: .6rem 0; }
-.play-area, .editors, .editor, .result { display: grid; gap: .5rem; min-width: 0; }
-.play-columns .editors { grid-template-columns: repeat(3, minmax(0,1fr)); }
-.play-side { grid-template-columns: minmax(0,var(--split)) 12px minmax(0,1fr); gap: 0; }
-.divider { cursor: ew-resize; touch-action: none; background: linear-gradient(to right, transparent 4px,var(--line) 4px 8px,transparent 8px); }
-.editor { font-weight: 600; }
-.editor textarea { width: 100%; min-height: 10rem; resize: vertical; background: var(--page); color: var(--text); border: 1px solid var(--line); padding: .7rem; border-radius: 8px; font: normal 14px/1.5 ui-monospace, monospace; }
-.result { align-content: start; }
-.result iframe { background: white; width: 100%; height: 20rem; border-radius: 8px; border: 1px solid var(--line); }
-.console-output { max-height: 12rem; overflow: auto; font: .85rem/1.5 ui-monospace, monospace; overflow-wrap: anywhere; white-space: pre-wrap; }
+.studio { min-width:0;display:grid;gap:.7rem;border:0;padding:0;margin:0; }
+.studio-toolbar,.layout-picker,.pane-heading,.console-title { display:flex;align-items:center;gap:.55rem; }
+.studio-toolbar { justify-content:space-between;flex-wrap:wrap; }
+.project-actions { margin:.5rem 0; }
+.layout-picker { flex-wrap:wrap; }
+.layout-picker strong { margin-right:.3rem;font-size:.85rem; }
+.layout-picker .btn[aria-pressed=true],.language-tabs .btn[aria-pressed=true] { background:var(--accent);color:var(--accent-ink); }
+.play-area { display:grid;gap:4px;padding:4px;overflow:hidden;min-width:0;height:clamp(420px,59vh,800px);background:#34463b;border-radius:12px; }
+.editors,.code-pane,.result { min-width:0;min-height:0; }
+.editors { display:flex;gap:4px; }
+.code-pane,.result { display:flex;flex-direction:column;overflow:hidden; }
+.code-pane { flex:1;background:#14231e;color:#eef6f1; }
+.pane-heading,.result h3,.console-title { flex:none;min-height:35px;padding:.42rem .72rem;font-size:.79rem;font-weight:700; }
+.pane-heading { width:100%;text-align:left;background:#22332b;color:#e6f4e9; }
+.pane-heading svg,.console-title svg:last-child { margin-left:auto; }
+.pane-heading[aria-expanded=false] svg,.console-title[aria-expanded=false] svg:last-child { transform:rotate(-90deg); }
+.language-dot { width:8px;height:8px;border-radius:2px; }
+.dot-html { background:#f7aa82; }.dot-css { background:#91baff; }.dot-js { background:#eed76b; }
+.result { background:white; }.result h3 { background:#e1eee2;color:#244a35; }
+.result iframe { flex:1;min-height:0;width:100%;border:0;background:white; }
+.play-quad { grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:1fr 1fr; }
+.play-quad.first-folded { grid-template-rows:auto 1fr; }
+.play-quad .editors { display:contents; }
+.play-quad .code-pane.is-folded { align-self:start;width:100%; }
+.play-side,.play-left { grid-template-columns:minmax(0,var(--split)) 12px minmax(0,1fr);gap:0; }
+.play-left { grid-template-columns:minmax(0,1fr) 12px minmax(0,var(--split)); }
+.play-left .result { order:-2; }.play-left .divider { order:-1; }
+.play-side .editors,.play-left .editors { flex-direction:column; }
+.play-side .is-folded,.play-left .is-folded { flex:0 0 auto; }
+.divider { cursor:ew-resize;touch-action:none;background:linear-gradient(to right,transparent 4px,#96a99a 4px 7px,transparent 7px); }
+.play-columns,.play-bottom,.play-tabs { grid-template-rows:1fr 1fr; }
+.play-columns.all-folded { grid-template-rows:auto 1fr; }.play-bottom.all-folded { grid-template-rows:1fr auto; }
+.play-bottom .result { order:-1; }.play-columns .is-folded,.play-bottom .is-folded { flex:0 1 6rem;align-self:start; }
+.play-tabs.active-folded { grid-template-rows:auto 1fr; }
+.console-pane { min-width:0;border:1px solid var(--line);border-radius:10px;padding:.25rem .65rem;background:var(--surface); }
+.console-title { width:100%;padding-inline:0; }
+.console-title small { font-weight:400;color:var(--muted); }
+.console-output { min-height:2rem;max-height:12rem;overflow:auto;font:.85rem/1.55 ui-monospace,monospace;overflow-wrap:anywhere;white-space:pre-wrap; }
+.console-output strong { color:var(--accent); }.console-output .log-error { color:var(--danger); }
+@media(max-width:700px){.play-area{height:60dvh;min-height:370px}.studio-toolbar .actions{gap:.25rem}}
 </style>

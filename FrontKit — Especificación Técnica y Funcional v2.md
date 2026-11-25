@@ -651,3 +651,400 @@ Una herramienta se considera terminada cuando cumple **todo** lo siguiente:
 | Alcance amplio (11 herramientas) | Etapas incrementales y DoD estricto; 1a valida la arquitectura antes de 1b |
 
 **Supuestos adoptados** (revisables): payload máximo de compartir del playground de 8.000 caracteres; historial de 100 pasos; límite de entrada del minificador de 2 MB; *handoff* con caducidad de 24 h; UI de Monaco en inglés en v1; ningún segundo idioma publicado hasta la Etapa 4.
+
+## 23. Ampliación del catálogo: 20 nuevas herramientas
+
+Esta ampliación **no sustituye** nada de las secciones 1–22: las extiende. Donde choca con una regla existente, se indica de forma explícita en 23.3 y **prevalece esta sección**.
+
+### 23.1 Decisiones de diseño de la ampliación
+
+- **Orden por dependencias y riesgo:** primero las herramientas de texto/datos (lógica pura), después tipografía y formas, luego las que procesan archivos (SVG, ZIP, imágenes) y por último los conversores CSS/HTML, que son los más heurísticos.
+- **Solapamientos resueltos:** el «constructor de formas orgánicas» ya existe como modo *organic* de Border (sección 7). Se convierte en la herramienta dedicada **Blob** y ambos comparten el mismo componente `OrganicRadiusEditor.vue` y la misma lógica en `lib/css/radius.ts` (sin duplicar). Border conserva un enlace «Abrir en Blob». Del mismo modo, Type Scale y Fluid Type comparten el cálculo de `clamp()`, y el optimizador SVG y el generador de sprites comparten `lib/svg/`.
+- **Corrección técnica importante (BEM/anidamiento):** el CSS Nesting **nativo no admite concatenar sufijos** (`&__title` o `&--danger` son válidos en SCSS, **no** en CSS nativo). Los conversores generan SCSS con `&__x` y, en CSS nativo, usan `& .bloque__x` o dejan el selector plano, con informe de especificidad (ver 28.1).
+- **Honestidad de los resultados:** las simulaciones de redes sociales y los conversores heurísticos se presentan como **aproximaciones con informe de lo no convertido**, nunca como «exactas».
+- **Privacidad primero:** todo se procesa en local. Solo hay **dos excepciones con consentimiento explícito** (Font Pairing y la URL de imagen de Meta Tags, ver 23.3).
+
+### 23.2 Catálogo ampliado
+
+Categorías nuevas: `data`, `typography`, `assets`, `html`, `refactor` (las demás reutilizan las existentes).
+
+| id | Ruta | Categoría | Etapa | Móvil | Entrada persistida | Compartir enlace |
+| --- | --- | --- | --- | --- | --- | --- |
+| `json` | `/tools/json` | data | 5 | Usable | ≤ 100 KB | Solo opciones |
+| `decoder` | `/tools/decoder` | data | 5 | Usable | **Nunca** (sensible) | **No** |
+| `mock-data` | `/tools/mock-data` | data | 5 | Usable | Esquema | Esquema + semilla |
+| `lorem` | `/tools/lorem` | typography | 5 | Completo | Opciones | Sí |
+| `readability` | `/tools/readability` | typography | 5 | Completo | ≤ 100 KB | Opciones + texto ≤ 1.000 car. |
+| `fluid-type` | `/tools/fluid-type` | typography | 5 | Completo | Sí | Sí |
+| `type-scale` | `/tools/type-scale` | typography | 5 | Completo | Sí | Sí |
+| `font-pairing` | `/tools/font-pairing` | typography | 6 | Completo | Sí | Sí |
+| `blob` | `/tools/blob` | effects | 6 | Completo | Sí | Sí |
+| `clip-path` | `/tools/clip-path` | effects | 6 | Completo | Sí (sin imagen) | Sí |
+| `backgrounds` | `/tools/backgrounds` | effects | 6 | Completo | Sí | Sí |
+| `svg-optimizer` | `/tools/svg-optimizer` | assets | 7 | Usable | ≤ 100 KB | No |
+| `svg-sprite` | `/tools/svg-sprite` | assets | 7 | Usable | Archivos en IndexedDB (opt-in) | No |
+| `favicon` | `/tools/favicon` | assets | 7 | Usable | Solo opciones | Solo opciones |
+| `meta-tags` | `/tools/meta-tags` | html | 7 | Completo | Sí | Sí (sin imagen local) |
+| `table-builder` | `/tools/table-builder` | html | 7 | Usable | Sí | Sí si ≤ 8.000 car. |
+| `css-converter` | `/tools/css-converter` | refactor | 8 | Tablet+ | ≤ 100 KB | No |
+| `bem` | `/tools/bem` | refactor | 8 | Tablet+ | ≤ 100 KB | No |
+| `smacss` | `/tools/smacss` | refactor | 8 | Tablet+ | ≤ 100 KB | No |
+| `stacking` | `/tools/stacking` | layout | 8 | Tablet+ | Escenario | Sí |
+
+### 23.3 Cambios transversales al core
+
+**Registro (`ToolDefinition`).** Se amplían `category` (con las cinco nuevas) y `phase` (`5 | 6 | 7 | 8`) y se añaden tres campos:
+
+```ts
+sensitive: boolean;                 // true: nunca se persiste, comparte, exporta ni entra en el historial
+inputKind: 'none' | 'text' | 'files';
+externalRequests?: 'google-fonts' | 'remote-image';  // exige consentimiento explícito
+```
+
+**Contrato `ToolLogic<S>`.** Se añaden `transient: (keyof S)[]` (campos de entrada voluminosos que no forman parte del estado persistido por defecto), `shareExclude: (keyof S)[]` y `limits: { maxInputBytes, maxFiles?, maxFileBytes? }`. Los límites se validan antes de procesar y muestran un error accesible y traducido.
+
+**Persistencia de entradas.** Nuevo ajuste en Configuración: «Recordar el contenido de entrada» (activado por defecto, **desactivado y bloqueado** en herramientas `sensitive`). Solo se persisten entradas ≤ 100 KB. Nuevo object store `iconSets` (blobs SVG del generador de sprites, solo con opt-in; el backup los **excluye** salvo que se marque «incluir archivos»).
+
+**Enmienda a 16.5 (privacidad).** La regla «sin peticiones a terceros» admite exactamente dos excepciones, ambas **desactivadas por defecto**, con diálogo de consentimiento que explica qué se envía (la IP del usuario al tercero) y revocables en Configuración (`settings.consents`):
+
+1. Font Pairing: carga de fuentes desde Google Fonts.
+2. Meta Tags: previsualizar una imagen desde una URL remota (la subida local no requiere consentimiento).
+
+Un test e2e con Playwright intercepta la red y comprueba que **no sale ninguna petición** sin consentimiento.
+
+**Librerías internas nuevas.**
+
+| Módulo | Contenido | Lo usan |
+| --- | --- | --- |
+| `lib/css-ast/` | Parseo, recorrido y serialización con `css-tree` | minifier, css-converter, bem, smacss |
+| `lib/rename/` | Motor de renombrado de clases (mapa antiguo → nuevo) en CSS y HTML | bem, smacss |
+| `lib/svg/` | Saneado, `svgo`, extracción de colores, conversión a React/Vue/Svelte, `<symbol>` | svg-optimizer, svg-sprite, favicon |
+| `lib/zip/` | Empaquetado con `fflate` en Worker | favicon, svg-sprite, smacss, mock-data |
+| `lib/text/` | Caracteres invisibles, limpieza, métricas de legibilidad | lorem, readability |
+| `lib/json/` | Parseo con posición de error, reparación, diff estructural, JSON Patch, inferencia de tipos TS | json, mock-data |
+| `lib/css/fluid.ts`, `lib/css/radius.ts` | `clamp()` y radios orgánicos con su normalización | fluid-type, type-scale, blob, border |
+
+**Componentes compartidos nuevos.** `FileDropZone.vue` (zona de arrastre **con botón equivalente**, validación por extensión y firma de archivo, límites), `useWorker` (pool con cancelación y progreso), `ZipDownloadButton.vue`, `SplitDiffView.vue`.
+
+**Dependencias nuevas** (⚠️ verificar versión, licencia y tamaño en el spike de cada etapa): `svgo` (build de navegador), `fflate`, `jsonc-parser`, `@faker-js/faker` (solo locales `es` y `en`, importados dinámicamente dentro de un Worker), lenguajes extra de `highlight.js/core` (`typescript`, `xml`, `scss`).
+
+**Presupuestos de rendimiento (ampliación de 16.4).** La regla de 60 KB gzip por herramienta admite estas excepciones documentadas, siempre en chunks diferidos: `mock-data` ≤ 150 KB, `svg-optimizer` y `svg-sprite` ≤ 120 KB (chunk `svgo` compartido), `json` ≤ 80 KB (el *diff editor* de Monaco reutiliza el chunk del playground), `font-pairing` ≤ 40 KB para el catálogo estático.
+
+**Seguridad común** a las herramientas que procesan contenido ajeno: nunca `v-html` ni `innerHTML` con la entrada del usuario; el HTML se analiza con `DOMParser` (`text/html`, no ejecuta scripts); el SVG se sanea (sin `<script>`, `<foreignObject>`, atributos `on*`, `href` externos ni `javascript:`) y se previsualiza como `<img>` con `blob:`/`data:` URI, no en línea; límite de tamaño y de número de archivos; descompresión limitada (sin leer ZIPs de entrada).
+
+**Catálogo con 31 herramientas.** Chips de categoría con contador y scroll horizontal, ordenación (nombre, recientes, favoritas), grupos colapsables en el *sidebar* y ranking del Command Palette que prioriza favoritas y recientes.
+
+## 24. Datos y texto (Etapa 5)
+
+### 24.1 Formateador, validador y comparador JSON
+
+**Ruta:** `/tools/json` · **Categoría:** `data`
+
+- **Estado:** `mode` (`format | diff`), `left`, `right` (transitorios), `options` (`indent: 2 | 4 | 'tab'`, `sortKeys`, `allowComments`, `tolerant`), `diffOptions` (`ignoreKeyOrder` por defecto `true`, `ignoreArrayOrder`, `arrayKey` para emparejar por una clave como `id`, `ignorePaths[]`, `numericEquality`).
+- **Validación:** error con línea, columna y fragmento resaltado en español; sugerencias de **reparación previsualizable** (comillas simples, comas finales, claves sin comillas, comentarios, `NaN`/`undefined`) que el usuario aplica o descarta; nunca se «arregla» en silencio.
+- **Precisión numérica:** `JSON.parse` pierde precisión por encima de 2^53; la herramienta lo detecta y avisa, y conserva los enteros grandes como texto en la vista de árbol y en el formateo.
+- **Vista de árbol** plegable con tipos, ruta JSON copiable (`$.items[2].id`) y contadores.
+- **Diff estructural:** clasifica `added`, `removed`, `changed`, `typeChanged` y `moved` (si hay `arrayKey`) con su ruta; filtros por tipo; resumen con contadores. Segunda vista de **diff de texto** con el *diff editor* de Monaco (carga diferida). Todo en Worker; límite 5 MB por lado.
+- **Salidas:** JSON formateado/minificado, **tipos TypeScript inferidos**, **JSON Patch (RFC 6902)** del diff e informe en Markdown.
+- **Tests:** casos dorados de errores de sintaxis; propiedad `diff(a, a) = ∅`; propiedad «aplicar `patch(a, b)` a `a` produce `b`»; claves duplicadas; enteros grandes.
+
+### 24.2 Decodificador de JWT y parámetros de URL
+
+**Ruta:** `/tools/decoder` · **Categoría:** `data` · **`sensitive: true`**
+
+- Dos pestañas: **JWT** y **URL**. Los tokens son datos sensibles: **no se persisten, no se comparten, no entran en el historial ni en backups**, y un aviso fijo lo indica. Sin peticiones de red.
+- **JWT:** decodificación Base64URL de `header` y `payload` con JSON formateado; **fechas** `exp`, `iat`, `nbf` en hora local y UTC con tiempo relativo (`Intl.RelativeTimeFormat`) y estado «válido / caducado / aún no válido»; explicación de *claims* estándar. Aviso destacado: **decodificar no es verificar**. Verificación opcional de firma en local con WebCrypto (HS256/384/512 con secreto, RS/ES con clave pública PEM); el secreto vive solo en memoria. Alertas: `alg: none`, tokens sin `exp`, algoritmos débiles.
+- **URL:** desglose en protocolo, host, puerto, ruta, *query* y *hash* con `URL` y `URLSearchParams`; parámetros repetidos y arrays, valores decodificados, edición de parámetros con reconstrucción de la URL, codificar/decodificar componente; detección de valores que parecen JWT, Base64 o JSON anidado con acción «decodificar».
+- **Salidas:** JSON de la URL o del token, copiar partes.
+- **Tests:** vectores de JWT de referencia, Base64URL con relleno ausente, URLs con caracteres Unicode y parámetros repetidos, token mal formado sin lanzar excepción.
+
+### 24.3 Generador de datos falsos (Mock Data)
+
+**Ruta:** `/tools/mock-data` · **Categoría:** `data`
+
+- **Estado:** `fields[]` (`id`, `name`, `type`, `options`, `nullablePercent`, `unique`), `count` (1–1.000; botones rápidos 10/50/100/500), `seed`, `locale` (`es-ES` por defecto, `en-US`), `format`.
+- **Tipos de campo:** `uuid` (v4 con `crypto.randomUUID`; v7 opcional), `autoincrement`, nombre/apellido/nombre completo, `email` **coherente con el nombre**, usuario, **avatar generado en local** (SVG de iniciales o identicon como *data URI*, sin servicios externos), fecha/fecha-hora (rango y formato ISO/epoch), teléfono, dirección y ciudad, empresa, cargo, frase de Lorem, entero/decimal con rango, booleano, `enum` con pesos, IPv4, URL, color, **patrón personalizado** (`USR-{####}`), **referencia a otro campo** y objetos/arrays anidados (profundidad ≤ 3).
+- **Semilla:** misma semilla ⇒ mismos datos (PRNG determinista propagado a Faker); botón Regenerar. Restricciones de unicidad con reintentos y error claro si es imposible.
+- **Salidas:** `.json`, **NDJSON**, `.csv` y **`.ts`** con `export interface` inferida y `export const <nombre>: <Tipo>[]` (opción `as const`); vista previa de las 20 primeras filas; descarga y copia.
+- **Proceso:** en Worker con barra de progreso; sin bloquear la UI.
+- **Plantillas:** Usuarios, Productos, Artículos de blog, Pedidos. Integración: «Enviar a Table Builder» (*handoff*).
+- **Tests:** determinismo por semilla, unicidad, referencias, anidados, escape CSV, tipos TS válidos.
+
+### 24.4 Generador de Lorem Ipsum y limpiador de texto
+
+**Ruta:** `/tools/lorem` · **Categoría:** `typography`
+
+- **Generador:** modos `párrafos | frases | palabras | caracteres` con cantidad exacta; en caracteres se corta en límite de palabra o exacto (opción); texto clásico latino o «texto de relleno en español»; formato de salida texto plano, HTML (`<p>`, listas, encabezados) o Markdown; semilla opcional; botón «empezar con *Lorem ipsum dolor sit amet*».
+- **Probador de truncado:** muestra el texto en cajas de anchura ajustable con `line-clamp-N`, `text-overflow: ellipsis` y una sola línea, y emite el CSS correspondiente (`-webkit-line-clamp` + `line-clamp`) y la clase Tailwind `line-clamp-2`.
+- **Limpiador:** al pegar se leen `text/html` y `text/plain`. Acciones: quitar formato, **eliminar caracteres invisibles** (U+200B, U+FEFF, U+00AD, U+2060…), NBSP → espacio, comillas tipográficas → rectas (opcional), colapsar espacios y saltos, normalizar a Markdown. **Visor de invisibles** que marca cada carácter oculto y cuenta cuántos se quitaron; el HTML pegado se sanea con lista blanca vía `DOMParser`.
+- **Tests:** longitud exacta en caracteres con Unicode (contar por *grapheme clusters*), limpieza de pegados reales de Word y Notion (fixtures), idempotencia.
+
+### 24.5 Inspector de legibilidad y ancho de línea
+
+**Ruta:** `/tools/readability` · **Categoría:** `typography`
+
+- **Estado:** `text`, `fontFamily` (pila del sistema o fuente local del usuario), `fontSize`, `lineHeight`, `letterSpacing`, `wordSpacing`, `maxWidthCh`.
+- **Medición real:** se mide con `Range.getClientRects()` cuántos caracteres hay **realmente** por línea (`ch` solo aproxima) y se muestran media, mínima y máxima, con guía visual y regla en `ch`. Aviso cuando se sale de **45–75** (ideal ≈ 66).
+- **Comprobaciones:** interlineado, espaciado entre párrafos, letras y palabras frente a **WCAG 1.4.12** (1,5 · 2 · 0,12em · 0,16em), con simulación «aplicar los mínimos».
+- **Métricas del texto:** palabras, caracteres, tiempo de lectura estimado y, para español, índice **Szigriszt-Pazos (INFLESZ)** ⚠️ (documentar la fórmula y su fuente).
+- **Salidas:** CSS (`max-width: 66ch`…) y Tailwind (`max-w-[66ch] text-lg leading-relaxed tracking-normal`, con detección de utilidades estándar).
+- **Tests:** medición con *mock* de `getClientRects`, fórmulas con textos de referencia, detección de rangos.
+
+## 25. Tipografía (Etapas 5 y 6)
+
+### 25.1 Calculadora de tipografía fluida (`clamp()`)
+
+**Ruta:** `/tools/fluid-type` · **Categoría:** `typography` · **Etapa:** 5
+
+- **Estado:** `property` (`font-size` por defecto; también `padding`, `margin`, `gap`, `width`… para «espaciado fluido»), `min`, `max`, `minViewport`, `maxViewport`, `unit` (`rem | px`), `rootFontSize` (16), `rows[]` (varios tamaños a la vez con nombre, p. ej. `text-sm … text-4xl`).
+- **Fórmula** (todo en px y luego convertido):
+  - `pendiente = (max − min) / (vwMax − vwMin)`
+  - `intercepto = min − pendiente × vwMin`
+  - `clamp(min, intercepto + pendiente × 100vw, max)`
+  - Ejemplo de referencia (16→24 px entre 320 y 1280 px): `clamp(1rem, 0.8333rem + 0.8333vw, 1.5rem)`. Se usa como caso dorado en los tests.
+- **Accesibilidad:** la salida usa **`rem` + `vw`** (no solo `vw`) para que el zoom del usuario funcione; se avisa cuando `max` supera ≈ 2,5× `min` por riesgo de fallo del criterio WCAG 1.4.4 ⚠️ (verificar y citar la regla).
+- **Preview:** control deslizante de ancho de pantalla con el valor calculado en vivo, **gráfica** tamaño-vs-ancho y texto de muestra; modo comparación contra tamaño fijo.
+- **Salidas:** CSS (`font-size: clamp(...)`), Tailwind (`text-[clamp(...)]` y bloque `@theme { --text-fluid-lg: clamp(...) }`), SCSS (función `fluid($min, $max, $vwMin, $vwMax)`), JSON.
+- **Tests:** caso dorado, `min = max`, `vwMin ≥ vwMax` (error de validación), unidades mixtas, redondeo estable a 4 decimales.
+
+### 25.2 Generador de escalas tipográficas
+
+**Ruta:** `/tools/type-scale` · **Categoría:** `typography` · **Etapa:** 5
+
+- **Estado:** `baseSize`, `ratio` (preajustes: Minor Second 1,067 · Major Second 1,125 · Minor Third 1,2 · Major Third 1,25 · Perfect Fourth 1,333 · Augmented Fourth 1,414 · Perfect Fifth 1,5 · Golden Ratio 1,618 · personalizada), `stepsDown` (0–3), `stepsUp` (0–10), `naming` (`xs…9xl` o `step--2…step-8`), `lineHeight` por paso (valor o regla: más ajustado cuanto mayor), `roundTo` (1 px o rejilla de 4 px), `fontFamily` (pila del sistema o fuente local del usuario).
+- **Modo fluido** (estilo Utopia): `base` y `ratio` distintos en el viewport mínimo y en el máximo; cada paso genera su `clamp()` con el motor de 25.1.
+- **Preview:** jerarquía `h1`–`h6`, párrafo, `small` y etiqueta con el texto editable, y tabla de tamaños en px/rem.
+- **Salidas:** variables CSS (`--step-0`), Tailwind v4 `@theme { --text-base: ...; --text-base--line-height: ...; }`, SCSS, JSON DTCG. Integración: «Enviar a Tokens» sustituye la sección tipografía (*handoff*, sección 15).
+- **Tests:** potencias exactas de la razón, redondeo, nombres de paso, modo fluido coherente con `fluid-type`.
+
+### 25.3 Probador de combinaciones de fuentes (*Font Pairing*)
+
+**Ruta:** `/tools/font-pairing` · **Categoría:** `typography` · **Etapa:** 6 · **`externalRequests: 'google-fonts'`**
+
+- **Privacidad:** cargar fuentes desde Google Fonts hace que Google reciba la IP del usuario. Por eso es **opt-in**: hasta aceptar el consentimiento, la herramienta muestra pilas de sistema y la tipografía solo se *describe*. El consentimiento es revocable en Configuración.
+- **Catálogo sin API en tiempo de ejecución:** un JSON estático (`family`, `category`, `weights`, `italic`, `axes`, `subsets`) generado en *build* por un script (con la API de desarrollador de Google Fonts y clave solo en local o en un *secret* de CI) y versionado en el repositorio; carga diferida, ≤ 40 KB gzip. Cada fuente se carga **solo con los pesos elegidos** y `display=swap`.
+- **Estado:** `heading { family, weight, italic }`, `body { family, weight }`, `sizes` (enlazables a Type Scale), `lineHeight`, `previewScene` (`product-card | login | nav | article`), `locks`.
+- **Preview real:** cuatro escenas de UI construidas con los componentes del propio UI Kit (tarjeta de producto, formulario de acceso, menú, artículo) dentro de un contenedor aislado; conmutador claro/oscuro.
+- **Ayuda a elegir:** filtro por categoría y subconjunto (por ejemplo `latin-ext` para español), sugerencias de pareja por contraste (serif + sans) o misma superfamilia, aleatorio respetando bloqueos, aviso de fuentes sin cursiva o sin los pesos pedidos.
+- **Salidas:** `<link>` con `preconnect`, alternativa `@import`, `font-family` con **pila de respaldo** (y `size-adjust` opcional ⚠️), Tailwind `@theme { --font-heading: ...; --font-body: ...; }` y **alternativa autoalojada** con `@fontsource` (comando `pnpm add @fontsource-variable/<familia>` y los `import`), recomendada por privacidad y rendimiento.
+- **Tests:** generación de URLs de Google Fonts (pesos ordenados, ejes variables, escape), pilas de respaldo, **e2e: sin petición de red sin consentimiento**.
+
+## 26. Formas y fondos (Etapa 6)
+
+### 26.1 Constructor de formas orgánicas (*Blob*)
+
+**Ruta:** `/tools/blob` · **Categoría:** `effects`
+
+- **Estado:** `radii` (8 valores en %: `tlh, trh, brh, blh / tlv, trv, brv, blv`), `symmetry` (`none | horizontal | vertical | both`), `seed`, `complexity`, `size`, `fill` (color, degradado o imagen local), `animate` (A → B).
+- **Normalización de radios (clave):** el navegador **reduce proporcionalmente todos los radios** si la suma de dos radios adyacentes supera la longitud del lado. Con factor `f = min(1, 100/(tlh+trh), 100/(trv+brv), 100/(brh+blh), 100/(tlv+blv))`, el radio real es `r × f`. El editor **dibuja la forma real aplicando `f`** y muestra un indicador («radios reducidos ×0,71») para que lo que se ve coincida con lo que se copia. Se testea con valores límite.
+- **Controles:** 8 tiradores arrastrables sobre el borde del lienzo (`role='slider'`, flechas ±1 %, Shift ±10 %) y 8 campos numéricos equivalentes; aleatorio con semilla, botón «suavizar» y «más irregular», presets (Gota, Huevo, Nube, Guijarro, Pétalo).
+- **Salidas:** CSS `border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%`; Tailwind `rounded-[30%_70%_70%_30%/30%_30%_70%_70%]`; **SVG con `<path>` de Bézier** (para usos fuera de CSS) y `clip-path: path()`; **animación morph** A → B como `@keyframes` (con envío a la herramienta Animation).
+- **Compartición de código:** el mismo `OrganicRadiusEditor.vue` se reutiliza en Border (modo orgánico).
+
+### 26.2 Generador visual de recortes con `clip-path`
+
+**Ruta:** `/tools/clip-path` · **Categoría:** `effects`
+
+- **Estado:** `shape` (`polygon | inset | circle | ellipse`), `points[]` (en %, o px con aviso de que no es responsive), `inset { t, r, b, l, radius }`, `circle { r, cx, cy }`, `snap` (off, 1, 5, 10 %), `mirror` (`h | v | both`), `previewTarget` (`sample | local-image | box`).
+- **Edición:** arrastrar vértices, **añadir vértice haciendo clic sobre una arista**, eliminar (mín. 3), tabla de vértices editable (alternativa de teclado: seleccionar vértice y flechas), zona exterior atenuada, rejilla opcional. Pointer events con `setPointerCapture`; deshacer/rehacer.
+- **Plantillas:** triángulo, trapecio, paralelogramo, rombo, pentágono, hexágono, octógono, estrella, flecha, chevron, burbuja de diálogo, cruz, diagonal.
+- **Salidas:** CSS `clip-path: polygon(50% 0%, 100% 100%, 0% 100%)`; Tailwind `[clip-path:polygon(50%_0%,100%_100%,0%_100%)]` ⚠️ (verificar utilidades disponibles); **SVG `<clipPath clipPathUnits='objectBoundingBox'>`** equivalente para usos en SVG.
+- **Tests:** serialización con porcentajes y redondeo, `inset round`, simetría, vértices fuera de rango.
+
+### 26.3 Generador de fondos: mesh gradients y patrones SVG
+
+**Ruta:** `/tools/backgrounds` · **Categoría:** `effects`
+
+- **Modo Mesh:** `baseColor` + `points[]` (`x, y, color, size, opacity`) arrastrables. Salida **solo CSS** con capas `radial-gradient(at X% Y%, color 0, transparent 50%)`; versión **SVG** con `feGaussianBlur` para desenfoque más suave; capa opcional de **grano** (`feTurbulence`). Aleatorio con armonías en OKLCH y entrada desde Paleta (*handoff*).
+- **Modo Patrón:** tipos `dots`, `grid`, `lines`, `diagonal`, `checker`, `waves`, `zigzag`, `triangles`, `hex`. Controles: escala, grosor, color, opacidad, rotación, fondo. Los patrones simples se emiten con **gradientes CSS** (más ligeros); los complejos con **SVG**.
+- **Codificación SVG:** se ofrece **URL-encoded (por defecto, ≈ 30 % más corto)** y **Base64** (a petición), con aviso si el *data URI* supera 4 KB.
+- **Salidas:** `background-image` + `background-size`/`background-repeat`; **Tailwind** `bg-[url('data:image/svg+xml,...')]` con escape vía `lib/tailwind`; descarga **`.svg`** y **`.png`** (con `canvas`).
+- **Rendimiento:** aviso de coste con muchas capas desenfocadas; render del preview con `will-change` controlado.
+- **Tests:** serialización de gradientes, escape del *data URI* (`#`, comillas, espacios), equivalencia visual de patrones en casos dorados (comparación de SVG normalizado).
+
+## 27. Assets, HTML y SEO (Etapa 7)
+
+### 27.1 Optimizador y limpiador de SVG
+
+**Ruta:** `/tools/svg-optimizer` · **Categoría:** `assets`
+
+- **Entrada:** `FileDropZone` (arrastrar o seleccionar; uno o varios `.svg`, ≤ 2 MB cada uno) o pegado de código. Procesado con `svgo` en Worker (⚠️ comprobar el build de navegador en el spike).
+- **Estado:** `options` (`removeMetadata`, `removeComments`, `removeEditorsNSData` para `inkscape:`/`sodipodi:`/`sketch:`, `removeTitle` y `removeDesc` **desactivados por defecto por accesibilidad**, `cleanupIds` con `prefixIds`, `floatPrecision` 0–6, `multipass`, `removeDimensions`), **`viewBox` siempre conservado** (el preset por defecto de svgo se ajusta para no eliminarlo), `colors[]` y `target`.
+- **Panel de colores:** lista de colores detectados con número de usos; sustituir uno a uno con selector; **«Convertir a `currentColor`»** (aviso si el icono es multicolor y se perdería información).
+- **Vista previa:** antes/después sobre fondo ajedrez y claro/oscuro, mostrada con `<img>` y *blob URL* del SVG **saneado** (nunca en línea), con ahorro en bytes y %.
+- **Salidas (`target`):** SVG optimizado, **React** (`.tsx` con `SVGProps<SVGSVGElement>`, atributos en camelCase, `class` → `className`, `style` string → objeto, `xlink:href` → `href`, `{...props}`, `width='1em' height='1em'` opcional), JSX, **Vue** (SFC con `v-bind='$attrs'`), **Svelte** (5 por defecto, con alternativa Svelte 4 ⚠️), y *data URI* para CSS. El nombre del componente sale del archivo en PascalCase.
+- **Lote:** varios archivos con tabla de resultados y descarga en ZIP.
+- **Tests:** *fixtures* reales exportados de Figma, Illustrator, Inkscape y Sketch; conversión a JSX válida (se compila en el test); el SVG con `<script>` o `onload` se sanea; `viewBox` preservado.
+
+### 27.2 Generador de sprites SVG y visor de iconos locales
+
+**Ruta:** `/tools/svg-sprite` · **Categoría:** `assets`
+
+- **Entrada:** hasta 200 archivos y 5 MB en total, con `FileDropZone`. Opcional: guardar el conjunto en IndexedDB (`iconSets`) para volver a abrirlo.
+- **Pipeline por icono:** saneado → `svgo` (compartido con 27.1) → conversión a `<symbol id viewBox>`. El `id` sale del nombre de archivo en *kebab-case*, con resolución de colisiones (`-2`); si falta `viewBox` se deriva de `width/height` y se avisa; se eliminan `width/height` y `xmlns` internos; los `id` internos (degradados, `clipPath`) se **prefijan** con el id del icono para evitar choques; detección y eliminación de duplicados idénticos.
+- **Colores:** opción global y por icono para convertir `fill`/`stroke` a `currentColor`, con aviso en iconos multicolor.
+- **Catálogo visual:** rejilla con búsqueda, tamaño y color de prueba (`currentColor`), botón de **un clic para copiar** `<svg class='icon' aria-hidden='true'><use href='#id' /></svg>`; opción accesible con `role='img'` y `aria-label`/`<title>`.
+- **Salidas (ZIP con `fflate`):** `sprite.svg`, `catalog.html` autocontenido, **`icons.d.ts`** (`type IconName = 'home' | ...`) y, opcional, un componente `<Icon name>` para React o Vue.
+- **Nota técnica visible en la UI:** `<use href='sprite.svg#id'>` **solo funciona en el mismo origen**; para otros casos se recomienda incrustar el sprite en línea.
+- **Tests:** colisiones de nombres, prefijado de ids, `viewBox` ausente, duplicados, tamaño de lote, sprite renderizable.
+
+### 27.3 Generador de favicons e iconos PWA
+
+**Ruta:** `/tools/favicon` · **Categoría:** `assets`
+
+- **Entrada:** PNG, JPG, WebP o SVG (idealmente cuadrada ≥ 512 px; error si < 192 px, aviso si no es cuadrada). Se aplica la orientación EXIF. Todo en local con `createImageBitmap` y `OffscreenCanvas` en Worker ⚠️ (alternativa: `canvas` en hilo principal); reducción por pasos para mejor calidad.
+- **Estado:** `padding`, `backgroundColor` (para iconos opacos), `maskable { enabled, backgroundColor }`, `appName`, `shortName`, `themeColor`, `backgroundColor`, `display` (`standalone` por defecto), `startUrl`, `basePath` (`/` o `/frontkit/`).
+- **Archivos generados:**
+  - `favicon.ico` (multitamaño 16, 32 y 48 con PNG incrustados), `icon-16.png`, `icon-32.png`.
+  - `apple-touch-icon.png` de **180×180 sin transparencia** (iOS rellena con negro si hay alfa).
+  - `icon-192.png`, `icon-512.png` y `icon-512-maskable.png` con **zona segura del 80 %** (el contenido queda dentro del círculo central).
+  - `icon.svg` si el origen es SVG (con modo oscuro opcional vía `prefers-color-scheme`).
+  - **`manifest.webmanifest`** (el nombre `manifest.json` también se admite como opción) con `icons` y `purpose` (`any` / `maskable`).
+- **Etiquetas `<link>`:** el conjunto moderno mínimo (`icon` `.ico` `sizes='32x32'`, `icon` SVG, `apple-touch-icon`, `manifest`) más `theme-color`, con rutas según `basePath`.
+- **Previews:** pestaña del navegador, pantalla de inicio de iOS/Android y máscaras (círculo, *squircle*, redondeada) para validar la versión *maskable*.
+- **Salida:** ZIP (`fflate`) y descargas individuales; copia del bloque HTML.
+- **Tests:** estructura binaria del ICO (cabecera y directorio), dimensiones de cada PNG, ausencia de alfa en el icono de Apple, manifest válido, zona segura.
+
+### 27.4 Previsualizador de Open Graph y *Meta Tags*
+
+**Ruta:** `/tools/meta-tags` · **Categoría:** `html` · **`externalRequests: 'remote-image'`**
+
+- **Estado:** `title`, `description`, `url` (canónica), `siteName`, `locale`, `type` (`website | article`), `image` (**subida local** o URL remota con consentimiento), `imageAlt`, `twitter { card, site, creator }`, `themeColor`, `robots`, y campos de `article` (`published_time`, `author`).
+- **Previews:** X (`summary_large_image` y `summary`), LinkedIn, WhatsApp, Discord y genérica de Facebook/Open Graph. Se presentan como **simulaciones aproximadas** con fecha de última verificación visible: las plataformas **cachean** y cambian su diseño; se enlaza a los depuradores oficiales cuando existan ⚠️.
+- **Lista de comprobación:** título ≈ 60 caracteres, descripción ≈ 155, `og:image` **absoluta**, proporción ≈ 1,91:1 (1200×630), peso razonable, `alt` presente, `canonical` absoluta; cada regla indica su plataforma y gravedad (aviso o error).
+- **Salida:** bloque `<head>` con `charset`, `viewport`, `title`, `description`, `canonical`, `og:*` (incluidos `og:image:width/height/alt`), `twitter:*`, `theme-color` y `robots`; atributos escapados.
+- **Privacidad:** la imagen remota solo se pide tras aceptar el consentimiento; la local no sale del navegador y **no** se incluye en el enlace compartido.
+- **Tests:** escape de HTML en atributos, reglas de la lista, omisión de etiquetas vacías, coherencia `og`/`twitter`.
+
+### 27.5 Constructor visual de tablas HTML accesibles y responsivas
+
+**Ruta:** `/tools/table-builder` · **Categoría:** `html`
+
+- **Estado:** `caption` (obligatoria, con aviso si falta), `columns[]` (`header`, `align`, `type`, `priority`, `sticky`), `rows[][]`, `rowHeaders` (la primera columna como `<th scope='row'>`), `footer`, `responsive { mode, breakpointPx }`, `sortable`, `striped`, `density`.
+- **Edición:** rejilla de datos con teclado (flechas, Enter, Tab), pegado desde Excel/Sheets (TSV) y CSV, y entrada desde Mock Data (*handoff*).
+- **Modos responsivos:**
+  1. **Scroll horizontal:** contenedor `role='region'` con `aria-labelledby` y `tabindex='0'` para que sea alcanzable por teclado.
+  2. **Columna fija:** primera columna `position: sticky` con fondo opaco y sombra de borde.
+  3. **Tarjetas:** bajo el punto de corte cada fila se convierte en una tarjeta con `td::before { content: attr(data-label) }`; como `display: block` puede **perder la semántica de tabla** en algunos lectores de pantalla, la salida **restaura los roles** (`role='table'`, `rowgroup`, `row`, `cell`, `columnheader`) ⚠️ y oculta `thead` de forma visual, no con `display: none`.
+  4. **Ocultar por prioridad:** columnas de baja prioridad se ocultan en pantallas pequeñas.
+- **Accesibilidad:** `scope` correcto, `aria-sort` si hay ordenación (con `<button>` en el encabezado y un pequeño *snippet* JS opcional), sin celdas de encabezado vacías, contraste de los estilos generados; panel de **comprobación a11y** con cada regla.
+- **Salidas:** HTML + CSS y HTML + Tailwind (`max-md:` y `before:content-[attr(data-label)]`); el preview usa un contenedor redimensionable para simular anchos.
+- **Tests:** estructura semántica (`caption`, `thead/tbody/tfoot`, `scope`), cada modo responsivo, roles en tarjetas, escape de contenido, `axe` sobre el HTML generado.
+
+## 28. Refactor y diagnóstico de CSS/HTML (Etapa 8)
+
+Principio común: son herramientas **heurísticas y deterministas** (sin IA, sin red). Cada una entrega siempre un **informe** de lo convertido, lo dudoso y lo no convertido, y un paso de **revisión** antes de aplicar cambios que puedan romper estilos. Se apoyan en `lib/css-ast/` y `lib/rename/`, se ejecutan en Worker (salvo el análisis de HTML, que usa `DOMParser` en el hilo principal con límite de 200 KB) y se prueban con *fixtures* dorados.
+
+### 28.1 Convertidor de CSS a CSS Nesting nativo, SCSS o Tailwind
+
+**Ruta:** `/tools/css-converter` · **Categoría:** `refactor`
+
+- **Estado:** `inputCss` (transitorio), `target` (`native-nesting | scss | tailwind-apply`), `options` (`bemStrategy`, `preserveSpecificity`, `maxDepth`, `unknownProps`, `breakpoints`).
+- **A CSS Nesting nativo:**
+  - Agrupa por selector compuesto inicial: `.card:hover` → `&:hover`, `.card .title` → `& .title`, `.card > p` → `& > p`, `.card.is-active` → `&.is-active`; `@media`/`@supports` que apuntan al mismo selector pasan a anidarse **dentro** de la regla.
+  - **BEM y `&__x`:** el CSS nativo **no permite** `&__title`. Estrategias: `keep-flat` (por defecto: `.card__title` queda plano y conserva la especificidad), `nest-descendant` (`.card { & .card__title {...} }`, que **sube la especificidad** de 0,1,0 a 0,2,0 y se avisa) y `scss` (sí admite `&__title` y `&--danger`).
+  - **Cascada:** se conserva el orden relativo; si agrupar obliga a mover una regla por encima de otra que comparte propiedades, **no se agrupa** y se informa.
+  - **Listas de selectores:** no se anida bajo `.a, .b` (el `&` se comporta como `:is()` con la especificidad del más alto) salvo opción explícita.
+  - Aviso de compatibilidad de *nesting* nativo por navegador ⚠️ (verificar tabla de soporte) y opción de emitir siempre `&` para selectores de tipo.
+- **A Tailwind v4 (`@apply`):** tabla de equivalencias versionada en `lib/tailwind/mappings/` (espaciado en múltiplos de 0,25 rem, `display`, flex/grid básicos, tipografía, colores que **coinciden exactamente** con la paleta por defecto, bordes, radios, sombras, posición, tamaños, opacidad, transiciones). Pseudoclases → variantes (`:hover` → `hover:`), `@media (min-width: …)` → `sm:`/`md:`/`lg:` cuando coincide con el *theme*, `prefers-color-scheme: dark` → `dark:`, `!important` → `!`. Lo que no tiene utilidad se emite como **propiedad arbitraria** `[prop:valor]` o se lista como no convertido (opción). Salida: bloques `.btn { @apply px-4 py-2 …; }` y una tabla «selector → clases». Fuera de alcance: comparar el resultado visual (no hay HTML de entrada).
+- **Informe:** reglas convertidas/no convertidas, cambios de especificidad, propiedades sin equivalencia, reordenaciones evitadas.
+- **Tests:** *fixtures* BEM, selectores combinados, `@media` anidados, cascada preservada (el CSS resultante se **aplana de nuevo y se compara** con el original), mapeos de Tailwind con compilación real (secciones 13/18.2).
+
+### 28.2 Convertidor de HTML a arquitectura BEM
+
+**Ruta:** `/tools/bem` · **Categoría:** `refactor`
+
+- **Estado:** `inputHtml`, `inputCss?` (opcional, para reescribirlo), `options` (`elementSep: '__'`, `modifierSep: '--'`, `case: 'kebab'`, `namespace` como `c-`, `keepUnknownClasses`, `keepStateClasses`, `addClassesToSemanticTags`), `dictionary` (equivalencias editables: `red → danger`, `green → success`, `blue → primary`, `yellow → warning`, `sm/small`, `lg/large`) y `overrides` por nodo.
+- **Algoritmo:**
+  1. Análisis con `DOMParser` y árbol de nodos con sus clases.
+  2. **Bloques:** elemento raíz con clase, o con nombre «tipo bloque» (`card`, `btn`, `nav`, `modal`, `form`…), o subárbol reutilizable con identidad propia. Sin clase útil, el nombre se infiere de la etiqueta/rol ARIA.
+  3. **Elementos:** los descendientes con clase pasan a `bloque__elemento`. **Siempre planos** (nunca `card__body__title`).
+  4. **Bloques anidados** (un `.btn` dentro de `.card`): se ofrece **mezcla** (`class='card__button btn'`) o elemento puro, con la mezcla como propuesta si el hijo tiene sus propios elementos.
+  5. **Modificadores:** `btn-red` se descompone en base + valor y se traduce con el diccionario a `--danger`; las clases de estado `is-*`/`has-*` se conservan (opción).
+- **Revisión obligatoria:** árbol con «clase original → clase nueva», tipo (bloque/elemento/modificador/ignorar) editable, advertencias (colisión con clases existentes, ambigüedad) y casilla por nodo. No se aplica nada hasta confirmar.
+- **Salidas:** HTML reescrito (conservando atributos y clases no BEM si se pide); **esqueleto CSS plano**; **SCSS anidado** (`&__title`, `&--danger`); **tabla de mapeo** (JSON/CSV); y, si se pegó CSS, **CSS reescrito** con `lib/rename` (los selectores complejos como `.card .title` se marcan con un comentario `/* revisar */` en lugar de adivinar).
+- **Tests:** *fixtures* con tarjetas, formularios, navegaciones y listas; idempotencia (pasar el resultado otra vez no lo cambia); no se pierden atributos ni contenido.
+
+### 28.3 Organizador y clasificador automático SMACSS
+
+**Ruta:** `/tools/smacss` · **Categoría:** `refactor`
+
+- **Estado:** `inputCss` (transitorio), `classification` (por regla/grupo, editable), `options` (`output: 'layers' | 'files'`, `groupModulesBy: 'owner' | 'single'`, `splitMixedRules`, `renameWithPrefixes`).
+- **Clasificación por puntuación** (cada regla suma señales; gana la categoría con más puntos, empate → Module; se muestra **confianza** alta/media/baja):
+
+| Categoría | Señales de selector | Señales de declaraciones |
+| --- | --- | --- |
+| Base | Elementos, `:root`, `*`, atributos sin clase, `@font-face` | Reseteos, tipografía base |
+| Layout | `l-*`, `layout`, `grid`, `container`, `wrapper`, `row`/`col`, regiones `header/main/aside/footer` | `display: flex/grid` de contenedor, `float`, `position` con `inset`, `grid-*`, `width`/`max-width` estructural |
+| Module | Clases de componente (por defecto) | Modelo de caja y tipografía de un componente |
+| State | `.is-*`, `.has-*`, `.active`, `.disabled`, `.open`, `[aria-expanded]`, `[disabled]` | Cambios de visibilidad o estado |
+| Theme | `.theme-*`, `[data-theme]` | Solo `color`, `background`, `border-color`, `box-shadow`, `font-family`, `fill`/`stroke` |
+
+- **Reglas especiales:** `:hover/:focus` permanecen con su módulo (configurable); `@keyframes` se asocian al módulo que los usa; las variables de `:root` van a Base (a Theme si cuelgan de `[data-theme]`).
+- **Reglas mixtas:** `splitMixedRules` (desactivado, marcado como **experimental**) separa las declaraciones de un mismo selector entre Layout/Module/Theme.
+- **Prefijos:** `l-`, `is-`, `has-`, `theme-` son **opt-in** y generan un mapa de renombrado con aviso de que el HTML debe actualizarse; con HTML pegado, `lib/rename` lo reescribe.
+- **Cascada:** reorganizar cambia el orden de origen. Por defecto se emite **un archivo con `@layer base, layout, module, state, theme;`**, que fija la prioridad independientemente del orden (nota: lo **no incluido en capas gana a lo que está en capas**). La alternativa `files` genera `base.css`, `layout.css`, `modules/*.css`, `state.css`, `theme.css` y `main.css` con `@import` ordenado, y descarga ZIP (`fflate`). Un **informe de riesgo de cascada** señala propiedades en conflicto entre categorías.
+- **Revisión:** tabla de reglas con categoría, confianza y selector de categoría por fila (alternativa de teclado al arrastre).
+- **Tests:** *fixtures* de hojas reales (Bootstrap reducido, CSS heredado), `@media` anidados, estabilidad de la clasificación, equivalencia de cascada tras reunir las capas.
+
+### 28.4 Simulador de `position: sticky` y contextos de apilamiento
+
+**Ruta:** `/tools/stacking` · **Categoría:** `layout` · **Uso:** tablet o escritorio
+
+- **Modelo (lógica pura):** árbol de nodos `{ id, label, parentId, styles }` con `position`, `top`, `z-index`, `overflow`, `transform`, `opacity`, `isolation`, `filter`, `will-change`, `contain`, `display`, `height`, `mix-blend-mode`. Funciones puras y testeables:
+  - `createsStackingContext(node, parent)`: raíz, posicionado con `z-index ≠ auto`, `fixed`/`sticky`, hijo de flex/grid con `z-index ≠ auto`, `opacity < 1`, `transform`/`filter`/`perspective`/`clip-path`/`mask` ≠ `none`, `isolation: isolate`, `mix-blend-mode ≠ normal`, `will-change` de esas propiedades, `contain: layout/paint` y `container-type` ⚠️ (contrastar con la lista de MDN en el spike).
+  - `buildStackingTree` y `paintOrder` según el orden de pintado de CSS 2.1 (apéndice E).
+  - `diagnoseSticky(tree, id)`: sin `top/bottom` definido, un ancestro con `overflow` distinto de `visible` que pasa a ser el contenedor de scroll, padre sin altura sobrante, `display: contents`, elementos de tabla, ancestro `transform`/`contain` en `fixed`…
+  - `diagnoseZIndex(tree, a, b)`: por qué `z-index: 9999` pierde frente a otro elemento (contextos de apilamiento distintos) indicando el **ancestro que crea el contexto**.
+- **UI:** selector de **escenarios** (≈ 10: *sticky* dentro de `overflow: hidden`, *sticky* en flex con `align-items: stretch`, `transform` que crea contexto, `z-index` sin posición, `opacity < 1`, `isolation`, `fixed` dentro de `transform`…); árbol editable (`role='tree'`) con interruptores por propiedad; vista previa real con scroll y barras; panel **«Por qué no funciona»** (✓ / ✗ con el nodo culpable resaltado al pasar el ratón) y árbol de contextos con **orden de pintado**; botón **«Aplicar corrección sugerida»** y copia del HTML/CSS del escenario.
+- **Validación contra el motor real:** el test e2e de Playwright ejecuta cada escenario, hace scroll y usa `getBoundingClientRect` y `elementFromPoint` para **comprobar que el diagnóstico coincide con el comportamiento del navegador**, en Chromium, Firefox y WebKit.
+- **Modo avanzado «Analizar mi HTML»** (hito opcional de la Etapa 8): se pega HTML/CSS en un iframe *sandbox*, se calculan los estilos con `getComputedStyle`, se devuelven por `postMessage` (con nonce) y se pasan por los mismos diagnosticadores.
+- **Compartir:** escenario completo por fragmento. **i18n:** las explicaciones son claves con parámetros, no cadenas concatenadas.
+
+## 29. Hoja de ruta ampliada, calidad y riesgos de la ampliación
+
+### 29.1 Etapas 5–8 (posteriores a la v1.0)
+
+La Etapa 4 (PWA, auditoría, base extensible) sigue siendo el hito de la **v1.0**. Las nuevas etapas son versiones menores. La PWA debe **excluir del precache** los chunks de `svgo`, `faker` y Monaco (caché de ejecución), y `pnpm new:tool` genera ya la plantilla con `limits`, `transient` y `sensitive`.
+
+| Etapa | Contenido | Criterio de salida |
+| --- | --- | --- |
+| 5 — Datos, texto y tipografía fluida | `json`, `decoder`, `mock-data`, `lorem`, `readability`, `fluid-type`, `type-scale`; `lib/json`, `lib/text`, `lib/css/fluid`, `useWorker`, `FileDropZone` (versión mínima) | DoD cumplida; Workers estables; prueba e2e de que `decoder` no persiste ni comparte |
+| 6 — Tipografía aplicada y formas | `font-pairing` (con consentimiento), `blob` (+ refactor de Border), `clip-path`, `backgrounds`; `lib/css/radius` | Test e2e de «sin red sin consentimiento»; normalización de radios verificada |
+| 7 — Assets y HTML | `svg-optimizer`, `svg-sprite`, `favicon`, `meta-tags`, `table-builder`; `lib/svg`, `lib/zip` | Saneado SVG auditado; ICO/ZIP validados; `axe` sobre las tablas generadas |
+| 8 — Refactor y diagnóstico | `css-converter`, `bem`, `smacss`, `stacking`; `lib/css-ast`, `lib/rename` | Equivalencia de cascada en *fixtures*; diagnóstico validado contra navegadores reales |
+
+### 29.2 Calidad y pruebas específicas
+
+- **Pruebas de equivalencia:** los conversores se verifican «aplanando» la salida y comparándola con la entrada (cascada y especificidad), no solo con *snapshots*.
+- **Fuzzing ligero** sobre parsers (`json`, `css-ast`, SVG saneado) con entradas malformadas: nunca excepciones no controladas, siempre error accesible.
+- **Rendimiento:** pruebas con entradas grandes (JSON 5 MB, CSS 1 MB, 200 SVG) midiendo que la UI no se bloquea (> 200 ms de *long task*).
+- **Privacidad:** e2e de red (sin peticiones sin consentimiento) y de persistencia (`sensitive` no escribe en IndexedDB).
+
+### 29.3 Ampliación de la Definition of Done (sección 21)
+
+11. Límites de entrada declarados en `limits` y errores accesibles y traducidos.
+12. Procesado pesado en Worker con progreso y cancelación.
+13. Entrada voluminosa tratada como `transient`; `sensitive` y `shareExclude` correctos.
+14. Herramientas heurísticas: **informe de resultados**, revisión previa cuando haya riesgo y *fixtures* dorados.
+15. Ninguna petición de red sin consentimiento y chunk dentro del presupuesto (o excepción documentada en 23.3).
+
+### 29.4 Riesgos y supuestos de la ampliación
+
+| Riesgo / supuesto | Mitigación |
+| --- | --- |
+| El catálogo pasa a 31 herramientas y crece el mantenimiento | Etapas con criterio de salida, plantilla `pnpm new:tool`, librerías compartidas |
+| `svgo` en navegador, tamaño o compatibilidad | Spike al inicio de la Etapa 7; presupuesto específico; alternativa: conjunto reducido de plugins propios |
+| Faker pesa demasiado | Solo locales necesarios, Worker, chunk diferido; plan B: generadores propios con listas es-ES |
+| Las previews sociales envejecen | Etiquetadas como aproximadas con fecha, enlaces a depuradores oficiales, revisión semestral |
+| Los conversores rompen la cascada | Equivalencia verificada, informe de riesgo, `@layer` por defecto, revisión previa |
+| Dos peticiones de terceros contradicen la promesa de privacidad | Opt-in explícito, desactivado por defecto, e2e de red, alternativa autoalojada documentada |
+| APIs de Tailwind/CSS modernas (`shape()`, `@scope`, nuevas utilidades) cambian | Tests de compilación real y avisos de compatibilidad; nuevos formatos de salida se añaden sin tocar las herramientas |
+
+### 29.5 Decisiones que conviene confirmar
+
+1. **Orden de etapas 5–8** (¿prefieres adelantar `svg-optimizer` o `meta-tags`?).
+2. **Font Pairing con Google Fonts opt-in** frente a ofrecer solo fuentes autoalojadas.
+3. **Excepciones de presupuesto** (Faker, svgo) o generadores propios más ligeros.
+4. **«Analizar mi HTML»** del simulador: ¿en alcance de la Etapa 8 o aplazado?
+5. **Prefijos SMACSS** (`l-`, `is-`…): se dejan como opt-in; ¿quieres que sean el comportamiento por defecto?

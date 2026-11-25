@@ -9,12 +9,14 @@ FrontKit es una suite de herramientas front-end que se ejecuta en el navegador. 
 | Gradientes | `/tools/gradient` | Beta |
 | Sombras | `/tools/shadow` | Beta |
 | Bordes y radios | `/tools/border` | Beta |
-| Playground HTML, CSS y JS | `/tools/playground` | Beta |
+| Playground | `/tools/playground` | Beta |
 | Layout, Paleta, Tokens, Transform, Filter, Animation y CSS Minifier | Catálogo | Planificadas |
 
 Los generadores beta ofrecen vista previa, CSS y Tailwind, favoritos, presets y enlaces compartidos. `Ctrl/Cmd+K` abre la búsqueda global.
 
-El Playground permite ejecutar los tres paneles, inspeccionar la consola, guardar proyectos locales y exportar HTML o JSON. La edición básica utiliza áreas de texto. La integración de Monaco, sus workers y Emmet sigue pendiente.
+El Playground actualiza la vista previa al editar HTML, CSS o JavaScript, permite cambiar la disposición y plegar los paneles, inspeccionar la consola, guardar proyectos locales y exportar HTML o JSON. El editor incluye resaltado de sintaxis y números de línea. La integración de Monaco, sus workers y Emmet sigue pendiente.
+
+Las 20 herramientas de las etapas 5 a 8 están registradas en el catálogo como TODO.
 
 ## Desarrollo
 

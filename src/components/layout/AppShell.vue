@@ -34,13 +34,13 @@ const current = computed(() => findTool(route.meta.toolId))
         <template v-if="store.favoriteTools.length">
           <p class="nav-label">{{ t('app.favorites') }}</p>
           <RouterLink v-for="tool in store.favoriteTools" :key="tool.id" :to="{ name: tool.id }">
-            <component :is="tool.icon" :size="15" /> {{ t('tools.' + tool.id + '.name') }}
+            <component :is="tool.icon" :size="15" /> {{ t('tools.' + tool.id + '.name') }} <small v-if="tool.todo" class="badge">{{ t('status.todo') }}</small>
           </RouterLink>
         </template>
         <template v-for="category in categories" :key="category">
           <p class="nav-label">{{ t('category.' + category) }}</p>
           <RouterLink v-for="tool in tools.filter(item => item.category === category)" :key="tool.id" :to="{ name: tool.id }">
-            <component :is="tool.icon" :size="15" /> {{ t('tools.' + tool.id + '.name') }}
+            <component :is="tool.icon" :size="15" /> {{ t('tools.' + tool.id + '.name') }} <small v-if="tool.todo" class="badge">{{ t('status.todo') }}</small>
           </RouterLink>
         </template>
       </nav>
@@ -77,7 +77,7 @@ const current = computed(() => findTool(route.meta.toolId))
       <RouterLink to="/settings" @click="drawer?.close()">{{ t('app.settings') }}</RouterLink>
       <RouterLink to="/about" @click="drawer?.close()">{{ t('app.about') }}</RouterLink>
       <RouterLink v-for="tool in tools" :key="tool.id" :to="{ name: tool.id }" @click="drawer?.close()">
-        <component :is="tool.icon" :size="17" /> {{ t('tools.' + tool.id + '.name') }}
+        <component :is="tool.icon" :size="17" /> {{ t('tools.' + tool.id + '.name') }} <small v-if="tool.todo" class="badge">{{ t('status.todo') }}</small>
       </RouterLink>
     </nav>
   </dialog>

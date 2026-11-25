@@ -50,6 +50,7 @@ const groups = computed(() => [
           <h3><RouterLink :to="{ name: tool.id }">{{ t('tools.' + tool.id + '.name') }} <ArrowUpRight :size="17" /></RouterLink></h3>
           <p>{{ t('tools.' + tool.id + '.description') }}</p>
           <div class="badges">
+            <span v-if="tool.todo" class="badge">{{ t('status.todo') }}</span>
             <span v-if="tool.supportsTailwind" class="badge">Tailwind</span>
             <span v-if="tool.status === 'beta'" class="badge badge-accent">{{ t('status.beta') }}</span>
           </div>

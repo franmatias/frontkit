@@ -44,7 +44,8 @@
   "status": {
     "available": "Disponible",
     "beta": "Beta",
-    "coming-soon": "Próximamente"
+    "coming-soon": "Próximamente",
+    "todo": "TODO"
   },
   "category": {
     "code": "Código",
@@ -52,7 +53,12 @@
     "layout": "Maquetación",
     "effects": "Efectos",
     "animation": "Animación",
-    "optimization": "Optimización"
+    "optimization": "Optimización",
+    "data": "Datos",
+    "typography": "Tipografía",
+    "assets": "Recursos gráficos",
+    "html": "HTML y SEO",
+    "refactor": "Refactorización"
   },
   "settings": {
     "appearance": "Apariencia",
@@ -146,10 +152,10 @@
   },
   "tools": {
     "playground": {
-      "name": "Playground HTML, CSS y JS",
+      "name": "Playground",
       "description": "Edita y ejecuta código en una vista previa aislada.",
       "tags": {
-        "main": "Playground HTML, CSS y JS"
+        "main": "HTML CSS JavaScript"
       }
     },
     "gradient": {
@@ -220,6 +226,146 @@
       "description": "Limpia y reduce el tamaño de tus hojas de estilo.",
       "tags": {
         "main": "Minificador CSS"
+      }
+    },
+    "json": {
+      "name": "JSON",
+      "description": "Formatear, validar y comparar documentos JSON.",
+      "tags": {
+        "main": "JSON"
+      }
+    },
+    "decoder": {
+      "name": "Decodificador JWT y URL",
+      "description": "Inspeccionar tokens JWT y parámetros de URL.",
+      "tags": {
+        "main": "Decodificador JWT y URL"
+      }
+    },
+    "mock-data": {
+      "name": "Datos de prueba",
+      "description": "Generar conjuntos de datos a partir de un esquema y una semilla.",
+      "tags": {
+        "main": "Datos de prueba"
+      }
+    },
+    "lorem": {
+      "name": "Lorem y limpieza de texto",
+      "description": "Generar texto de muestra y limpiar caracteres invisibles.",
+      "tags": {
+        "main": "Lorem y limpieza de texto"
+      }
+    },
+    "readability": {
+      "name": "Legibilidad",
+      "description": "Analizar la legibilidad y el ancho de línea.",
+      "tags": {
+        "main": "Legibilidad"
+      }
+    },
+    "fluid-type": {
+      "name": "Tipografía fluida",
+      "description": "Calcular tamaños fluidos con clamp().",
+      "tags": {
+        "main": "Tipografía fluida"
+      }
+    },
+    "type-scale": {
+      "name": "Escalas tipográficas",
+      "description": "Construir escalas de tamaños para títulos y texto.",
+      "tags": {
+        "main": "Escalas tipográficas"
+      }
+    },
+    "font-pairing": {
+      "name": "Combinaciones de fuentes",
+      "description": "Probar parejas tipográficas en títulos y párrafos.",
+      "tags": {
+        "main": "Combinaciones de fuentes"
+      }
+    },
+    "blob": {
+      "name": "Formas orgánicas",
+      "description": "Diseñar contornos orgánicos mediante radios elípticos.",
+      "tags": {
+        "main": "Formas orgánicas"
+      }
+    },
+    "clip-path": {
+      "name": "Recortes CSS",
+      "description": "Construir recortes con clip-path.",
+      "tags": {
+        "main": "Recortes CSS"
+      }
+    },
+    "backgrounds": {
+      "name": "Fondos y patrones",
+      "description": "Diseñar degradados de malla y patrones SVG.",
+      "tags": {
+        "main": "Fondos y patrones"
+      }
+    },
+    "svg-optimizer": {
+      "name": "Optimizador SVG",
+      "description": "Limpiar y optimizar archivos SVG.",
+      "tags": {
+        "main": "Optimizador SVG"
+      }
+    },
+    "svg-sprite": {
+      "name": "Sprites SVG",
+      "description": "Agrupar símbolos SVG y explorar iconos locales.",
+      "tags": {
+        "main": "Sprites SVG"
+      }
+    },
+    "favicon": {
+      "name": "Favicons e iconos PWA",
+      "description": "Preparar iconos y variantes para una aplicación web.",
+      "tags": {
+        "main": "Favicons e iconos PWA"
+      }
+    },
+    "meta-tags": {
+      "name": "Metaetiquetas y Open Graph",
+      "description": "Preparar metadatos y previsualizar tarjetas sociales.",
+      "tags": {
+        "main": "Metaetiquetas y Open Graph"
+      }
+    },
+    "table-builder": {
+      "name": "Tablas HTML",
+      "description": "Construir tablas accesibles y adaptables.",
+      "tags": {
+        "main": "Tablas HTML"
+      }
+    },
+    "css-converter": {
+      "name": "Conversor CSS",
+      "description": "Convertir reglas CSS a anidamiento nativo, SCSS o Tailwind.",
+      "tags": {
+        "main": "Conversor CSS"
+      }
+    },
+    "bem": {
+      "name": "Conversor BEM",
+      "description": "Organizar clases HTML y CSS con la convención BEM.",
+      "tags": {
+        "main": "Conversor BEM"
+      }
+    },
+    "smacss": {
+      "name": "Organizador SMACSS",
+      "description": "Clasificar reglas de estilo según SMACSS.",
+      "tags": {
+        "main": "Organizador SMACSS"
+      }
+    },
+    "stacking": {
+      "name": "Contextos de apilamiento",
+      "description": "Explorar el apilamiento y el comportamiento de position: sticky.",
+      "tags": {
+        "main": "Contextos de apilamiento"
       }
     }
   }

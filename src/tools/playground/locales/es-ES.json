@@ -55,5 +55,20 @@
     "value": "Valor",
     "script": "JavaScript",
     "emmet": "Emmet"
-  }
+  },
+  "activeProject": "Proyecto activo",
+  "formatAll": "Formatear todo",
+  "formatPanel": "Formatear {language}",
+  "formatting": "Formateando código…",
+  "formatDone": "Código formateado.",
+  "formatUnchanged": "El código ya está formateado o está vacío.",
+  "formatInvalid": "No se pudo formatear {languages}. Revisa la sintaxis o el tamaño.",
+  "formatFailed": "El formateador no está disponible.",
+  "fullscreen": "Pantalla completa",
+  "exitFullscreen": "Salir de pantalla completa",
+  "tasks": "Lista de tareas",
+  "filterList": "Buscador de tarjetas",
+  "paletteSwitch": "Selector de tema",
+  "formDemo": "Formulario de contacto",
+  "accordion": "Acordeón de preguntas"
 }

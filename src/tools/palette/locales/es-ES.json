@@ -49,5 +49,15 @@
   "sunset": "Atardecer",
   "ocean": "Océano",
   "invalidColor": "Introduce un color HEX de seis dígitos.",
-  "invalidName": "Usa un nombre único que empiece por una letra y contenga solo minúsculas, números o guiones."
+  "invalidName": "Usa un nombre único que empiece por una letra y contenga solo minúsculas, números o guiones.",
+  "swatchTitle": "Muestras",
+  "scene": "Paleta en una interfaz",
+  "sceneTheme": "Tema de la vista de paleta",
+  "sceneTitle": "Guía de interfaz",
+  "sceneLabel": "Componentes",
+  "sceneHeadline": "Un color para cada acción",
+  "sceneAction": "Acción principal",
+  "primaryColor": "Principal",
+  "secondaryColor": "Secundario",
+  "sceneContrast": "Contraste de la acción {ratio}:1"
 }

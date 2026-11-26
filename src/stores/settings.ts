@@ -3,12 +3,21 @@ import { ref } from 'vue'
 import * as v from 'valibot'
 import { read, write, writeSettings } from '../core/storage/db'
 
+export const syntaxThemes = ['frontkit', 'paper', 'midnight', 'contrast', 'atlantic', 'lavender', 'graphite', 'sand', 'frost', 'cherry'] as const
+
+export const accents = ['forest', 'ocean', 'iris', 'coral'] as const
+export const editorFonts = ['system', 'consolas', 'courier'] as const
+const defaultAppearance = { accent: 'forest', density: 'comfortable', reducedMotion: false } as const
+
 const range = (min: number, max: number) => v.pipe(v.number(), v.integer(), v.minValue(min), v.maxValue(max))
 const schema = v.strictObject({
   theme: v.picklist(['light', 'dark', 'system']),
   locale: v.literal('es-ES'),
+  appearance: v.optional(v.strictObject({
+    accent: v.picklist(accents), density: v.picklist(['comfortable', 'compact']), reducedMotion: v.boolean(),
+  }), () => ({ ...defaultAppearance })),
   editor: v.strictObject({
-    fontSize: range(10, 32), tabSize: range(1, 8), wordWrap: v.boolean(),
+    syntaxTheme: v.optional(v.picklist(syntaxThemes), 'frontkit'), fontFamily: v.optional(v.picklist(editorFonts), 'system'), lineNumbers: v.optional(v.boolean(), true), fontSize: range(10, 32), tabSize: range(1, 8), wordWrap: v.boolean(),
     minimap: v.boolean(), autoRun: v.boolean(), loopProtection: v.optional(v.boolean(), true), autoRunDelayMs: range(100, 5000),
   }),
   preferences: v.strictObject({
@@ -20,8 +29,8 @@ const schema = v.strictObject({
 export type Settings = v.InferOutput<typeof schema>
 
 const defaults = (): Settings => ({
-  theme: 'system', locale: 'es-ES',
-  editor: { fontSize: 14, tabSize: 2, wordWrap: true, minimap: false, autoRun: false, loopProtection: true, autoRunDelayMs: 350 },
+  theme: 'system', locale: 'es-ES', appearance: { ...defaultAppearance },
+  editor: { syntaxTheme: 'frontkit', fontFamily: 'system', lineNumbers: true, fontSize: 14, tabSize: 2, wordWrap: true, minimap: false, autoRun: false, loopProtection: true, autoRunDelayMs: 350 },
   preferences: {
     defaultColorFormat: 'hex', defaultUnit: 'px', autoCopyOnClick: false,
     rememberInput: true, showTailwindByDefault: false, colorContrastMethod: 'wcag',

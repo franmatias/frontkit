@@ -66,6 +66,7 @@ test('actualiza los tres lenguajes y conserva la vista al reorganizar los panele
 
 test('evalúa comandos en el documento de la vista previa', async ({ page }) => {
   await page.goto('./tools/playground')
+  await expect(page.frameLocator('.result iframe').getByRole('heading', { name: 'FrontKit' })).toBeVisible()
   const input = page.getByRole('textbox', { name: 'Escribe JavaScript en la consola' })
   const output = page.locator('.console-output')
   async function command(source: string) {

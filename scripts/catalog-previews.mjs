@@ -32,6 +32,7 @@ try {
     bem:['Analizar HTML','Confirmar y generar HTML'],
     smacss:['Clasificar reglas','Confirmar y generar CSS'],
     'a11y-audit':['Auditar HTML'],
+    playground:['Vista debajo','Plegar CSS'],
     'svg-optimizer':['Optimizar SVG'],
     'svg-sprite':['Generar sprite'],
     favicon:['Usar SVG de ejemplo','Generar favicons'],
@@ -42,6 +43,7 @@ try {
       await page.goto('http://127.0.0.1:'+port+'/frontkit/tools/'+id)
       await page.getByRole('heading',{level:1}).first().waitFor()
       for (const name of preparations[id] ?? []) await page.getByRole('button',{name,exact:true}).click({timeout:4000})
+      if (id==='playground') await page.locator('.projects-panel summary').click()
       if (id==='a11y-audit') await page.locator('summary code').getByText('image-alt',{exact:true}).waitFor()
       if (id==='image-optimizer') {
         await page.getByLabel('Archivos de imagen').setInputFiles(resolve(folder,'palette.jpg'))
@@ -51,7 +53,7 @@ try {
       const previews = {'svg-optimizer':'.compare img', 'svg-sprite':'.icons-sheet', favicon:'.device-grid'}
       if (previews[id]) await page.locator(previews[id]).first().waitFor()
       await page.evaluate(()=>document.fonts.ready)
-      const card = page.locator(id==='a11y-audit' ? '.preview-column > .panel' : id==='image-optimizer' || id==='svg-optimizer' ? '.compare' : id==='svg-sprite' ? '.icons-sheet' : id==='meta-tags' ? '.social article' : id==='favicon' ? '.devices' : id==='table-builder' ? '.frame-scroll' : '.preview-panel,.preview-column > .panel,.tool-controls,.main .panel').first()
+      const card = page.locator(id==='playground' ? '.studio' : id==='palette' ? '.preview-panel' : id==='a11y-audit' ? '.preview-column > .panel' : id==='image-optimizer' || id==='svg-optimizer' ? '.compare' : id==='svg-sprite' ? '.icons-sheet' : id==='meta-tags' ? '.social article' : id==='favicon' ? '.devices' : id==='table-builder' ? '.frame-scroll' : '.preview-panel,.preview-column > .panel,.tool-controls,.main .panel').first()
       const target = await card.count() ? card : page.locator('#main')
       await target.scrollIntoViewIfNeeded()
       const box = await target.boundingBox()

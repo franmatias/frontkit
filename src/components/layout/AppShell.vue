@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Braces, Command, Github, Menu, PanelLeftClose, Sun } from 'lucide-vue-next'
+import { Braces, Command, Github, Menu, PanelLeftClose, Settings, Sun } from 'lucide-vue-next'
 import { computed, inject, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
@@ -30,7 +30,6 @@ const current = computed(() => findTool(route.meta.toolId))
       <RouterLink to="/" class="brand"><span class="brand-icon"><Braces :size="20" /></span> FrontKit</RouterLink>
       <nav :aria-label="t('app.menu')">
         <RouterLink to="/">{{ t('app.catalog') }}</RouterLink>
-        <RouterLink to="/settings">{{ t('app.settings') }}</RouterLink>
         <RouterLink to="/about">{{ t('app.about') }}</RouterLink>
         <template v-if="store.favoriteTools.length">
           <p class="nav-label">{{ t('app.favorites') }}</p>
@@ -53,6 +52,7 @@ const current = computed(() => findTool(route.meta.toolId))
           <button class="btn search-trigger" type="button" :aria-label="t('app.search')" @click="palette?.show()"><Command :size="16" /> <span>{{ t('app.search') }}</span><kbd>Ctrl K</kbd></button>
           <button class="icon-btn" type="button" :aria-label="t('app.changeTheme')" @click="settings.cycleTheme()"><Sun :size="19" /></button>
           <a class="icon-btn" href="https://github.com/franmatias/frontkit" :aria-label="t('app.github')"><Github :size="19" /></a>
+          <RouterLink :to="{ name: 'settings' }" class="icon-btn settings-shortcut" :aria-label="t('app.settings')" :title="t('app.settings')"><Settings :size="19" aria-hidden="true" /></RouterLink>
         </div>
       </header>
       <main id="main" class="main" tabindex="-1">
@@ -70,7 +70,6 @@ const current = computed(() => findTool(route.meta.toolId))
     <button class="btn" type="button" @click="drawer?.close()">{{ t('app.close') }}</button>
     <nav :aria-label="t('app.menu')">
       <RouterLink to="/" @click="drawer?.close()">{{ t('app.catalog') }}</RouterLink>
-      <RouterLink to="/settings" @click="drawer?.close()">{{ t('app.settings') }}</RouterLink>
       <RouterLink to="/about" @click="drawer?.close()">{{ t('app.about') }}</RouterLink>
       <CategoryNavigation @navigate="drawer?.close()" />
     </nav>

@@ -23,6 +23,7 @@ test('links a catalog image to its tool and expands sidebar categories on demand
 test('renders a linked image for every catalog item and keeps mobile categories collapsible',async({page})=>{
   await page.goto('./')
   const cards=page.locator('.tool-card .card-link')
+  await expect(cards.first()).toBeVisible()
   const previews=await cards.evaluateAll(links=>links.map(link=>({
     href:link.getAttribute('href'), src:link.querySelector('img')?.currentSrc || link.querySelector('img')?.getAttribute('src'),
   })))

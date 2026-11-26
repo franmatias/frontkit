@@ -1,10 +1,12 @@
 import * as v from 'valibot'
 import { safeJson } from '../../core/storage/backup'
 import { defineTool } from '../../core/tool'
+import { examples } from './examples'
 
 export const languages = ['html', 'css', 'js'] as const
 export const layouts = ['quad', 'side', 'left', 'columns', 'bottom', 'tabs'] as const
-const code = v.pipe(v.string(), v.maxLength(120_000))
+export const sourceLimit = 120_000
+const code = v.pipe(v.string(), v.maxLength(sourceLimit))
 const schema = v.strictObject({ html: code, css: code, js: code, layout: v.picklist(layouts) })
 export type Source = v.InferOutput<typeof schema>
 export const templates: Record<string, Source> = {
@@ -18,6 +20,7 @@ export const templates: Record<string, Source> = {
   counter: { html: '<button id="counter">0</button>',
     css: 'button { margin: 2rem; padding: 1rem 2rem; border-radius: .75rem; font-size: 2rem; }',
     js: "let count = 0\nconst button = document.querySelector('#counter')\nbutton.onclick = () => {\n  button.textContent = String(++count)\n  console.log(count)\n}", layout: 'side' },
+  ...examples,
 }
 export const logic = defineTool<Source>({
   id: 'playground', schema, defaultState: () => ({ ...templates.card }), outputs: {}, presets: [],

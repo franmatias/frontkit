@@ -97,7 +97,38 @@
     "colorContrastMethod": "Método de contraste",
     "rememberInput": "Recordar el contenido de entrada",
     "defaultColorFormat": "Formato de color",
-    "defaultUnit": "Unidad"
+    "defaultUnit": "Unidad",
+    "syntaxTheme": "Tema de resaltado de sintaxis",
+    "syntaxThemes": {
+      "frontkit": "FrontKit oscuro",
+      "paper": "Papel claro",
+      "midnight": "Medianoche",
+      "contrast": "Alto contraste",
+      "atlantic": "Atlántico",
+      "lavender": "Lavanda",
+      "graphite": "Grafito",
+      "sand": "Arena",
+      "frost": "Escarcha",
+      "cherry": "Cerezo"
+    },
+    "accent": "Color de acento",
+    "accents": {
+      "forest": "Bosque",
+      "ocean": "Océano",
+      "iris": "Iris",
+      "coral": "Coral"
+    },
+    "density": "Densidad de la interfaz",
+    "comfortable": "Cómoda",
+    "compact": "Compacta",
+    "reducedMotion": "Reducir las animaciones de la interfaz",
+    "lineNumbers": "Mostrar números de línea",
+    "fontFamily": "Fuente del editor",
+    "editorFonts": {
+      "system": "Monoespaciada del sistema",
+      "consolas": "Consolas",
+      "courier": "Courier New"
+    }
   },
   "about": {
     "summary": "FrontKit es una colección abierta de herramientas de desarrollo web que funcionan en tu navegador.",

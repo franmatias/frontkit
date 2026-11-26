@@ -12,7 +12,7 @@ import { useNotificationsStore } from '../../stores/notifications'
 import { useToolsStore } from '../../stores/tools'
 import CodeOutputPanel from './CodeOutputPanel.vue'
 
-const props = defineProps<{ logic: ToolLogic<S>; supported?: (state: S) => boolean }>()
+const props = defineProps<{ logic: ToolLogic<S>; supported?: (state: S) => boolean; previewBackground?: boolean }>()
 defineSlots<{
   controls(props: { state: S; update: (apply: (draft: S) => void, group?: string) => void }): unknown
   preview(props: { state: S; update: (apply: (draft: S) => void, group?: string) => void }): unknown
@@ -144,7 +144,7 @@ onUnmounted(() => {
         <section class="panel preview-panel">
           <div class="panel-top">
             <h2>{{ t('tool.preview') }}</h2>
-            <div class="actions">
+            <div v-if="previewBackground !== false" class="actions">
               <input v-if="background === 'custom'" v-model="customBackground" type="color" :aria-label="t('tool.background')" />
               <select v-model="background" :aria-label="t('tool.background')">
                 <option value="default">{{ t('tool.background') }}</option>
@@ -156,7 +156,7 @@ onUnmounted(() => {
             </div>
           </div>
           <p v-if="supported && !supported(state)" class="notice" role="status">{{ t('tool.unsupported') }}</p>
-          <div class="preview" :class="'preview-' + background" :style="previewStyle">
+          <div class="preview" :class="previewBackground === false ? 'preview-own-background' : 'preview-' + background" :style="previewStyle">
             <slot name="preview" :state="state" :update="update" />
           </div>
         </section>

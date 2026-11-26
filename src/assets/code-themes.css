@@ -1,0 +1,136 @@
+[data-code-theme] {
+  --code-background: #14231e;
+  --code-foreground: #e4eee8;
+  --code-gutter: #12201b;
+  --code-muted: #a5b8ac;
+  --code-line: #355045;
+  --code-selection: #6589c96b;
+  --code-focus: #86d0af;
+  --code-keyword: #ffabbe;
+  --code-string: #c6e49e;
+  --code-number: #ffca93;
+  --code-title: #a0d6ff;
+}
+[data-code-theme='paper'] {
+  --code-background: #fffdf6;
+  --code-foreground: #232b2a;
+  --code-gutter: #f1eee4;
+  --code-muted: #535e58;
+  --code-line: #d4cec0;
+  --code-selection: #5883c44a;
+  --code-focus: #08665b;
+  --code-keyword: #902253;
+  --code-string: #34611c;
+  --code-number: #854125;
+  --code-title: #174f83;
+}
+[data-code-theme='midnight'] {
+  --code-background: #161c33;
+  --code-foreground: #e7ecff;
+  --code-gutter: #101529;
+  --code-muted: #aab4d3;
+  --code-line: #465578;
+  --code-selection: #7698ef6b;
+  --code-focus: #9fbaff;
+  --code-keyword: #e5afff;
+  --code-string: #a7e7d7;
+  --code-number: #ffd49a;
+  --code-title: #a9c5ff;
+}
+[data-code-theme='contrast'] {
+  --code-background: #0a0a0a;
+  --code-foreground: #fff;
+  --code-gutter: #171717;
+  --code-muted: #d8d8d8;
+  --code-line: #777;
+  --code-selection: #426bafad;
+  --code-focus: #fff275;
+  --code-keyword: #ffa6d8;
+  --code-string: #b6ff78;
+  --code-number: #ffcf75;
+  --code-title: #8edfff;
+}
+[data-code-theme='atlantic'] {
+  --code-background: #10252f;
+  --code-foreground: #e1f4fa;
+  --code-gutter: #0b1b24;
+  --code-muted: #a1c0cd;
+  --code-line: #385864;
+  --code-selection: #4c9ab266;
+  --code-focus: #82e4eb;
+  --code-keyword: #b6baff;
+  --code-string: #a4ead8;
+  --code-number: #ffce96;
+  --code-title: #81ddfc;
+}
+[data-code-theme='lavender'] {
+  --code-background: #f6f0fd;
+  --code-foreground: #29213c;
+  --code-gutter: #ebe2f7;
+  --code-muted: #615670;
+  --code-line: #d7c9e6;
+  --code-selection: #9664bf35;
+  --code-focus: #6b3992;
+  --code-keyword: #732781;
+  --code-string: #315b30;
+  --code-number: #8f4330;
+  --code-title: #364897;
+}
+[data-code-theme='graphite'] {
+  --code-background: #24262b;
+  --code-foreground: #f0eff2;
+  --code-gutter: #1b1d22;
+  --code-muted: #bcbec9;
+  --code-line: #51545b;
+  --code-selection: #81899e66;
+  --code-focus: #b8d5ff;
+  --code-keyword: #ff9f9a;
+  --code-string: #c4e58f;
+  --code-number: #f4d28f;
+  --code-title: #a8cbff;
+}
+[data-code-theme='sand'] {
+  --code-background: #fff4df;
+  --code-foreground: #342719;
+  --code-gutter: #f5e6cb;
+  --code-muted: #675744;
+  --code-line: #dbc7a4;
+  --code-selection: #b177463d;
+  --code-focus: #8e4e1f;
+  --code-keyword: #922d46;
+  --code-string: #375a28;
+  --code-number: #80411b;
+  --code-title: #284f75;
+}
+[data-code-theme='frost'] {
+  --code-background: #eef7fc;
+  --code-foreground: #1b303e;
+  --code-gutter: #e0eef7;
+  --code-muted: #4d6475;
+  --code-line: #bfd4e3;
+  --code-selection: #4b8ab842;
+  --code-focus: #245c97;
+  --code-keyword: #83305a;
+  --code-string: #075e55;
+  --code-number: #8d451d;
+  --code-title: #184e87;
+}
+[data-code-theme='cherry'] {
+  --code-background: #2d1723;
+  --code-foreground: #ffedf2;
+  --code-gutter: #23101c;
+  --code-muted: #cfacba;
+  --code-line: #694653;
+  --code-selection: #ad648366;
+  --code-focus: #ff9cba;
+  --code-keyword: #ffa8cb;
+  --code-string: #d3e99b;
+  --code-number: #ffd09f;
+  --code-title: #a7d9ff;
+}
+[data-code-theme] :is(.hljs-comment, .hljs-quote) { color: var(--code-muted); }
+[data-code-theme] :is(.hljs-keyword, .hljs-selector-tag, .hljs-tag, .hljs-name, .hljs-meta) { color: var(--code-keyword); }
+[data-code-theme] :is(.hljs-string, .hljs-attr, .hljs-selector-class, .hljs-regexp) { color: var(--code-string); }
+[data-code-theme] :is(.hljs-number, .hljs-literal, .hljs-attribute) { color: var(--code-number); }
+[data-code-theme] :is(.hljs-title, .hljs-built_in, .hljs-selector-id, .hljs-variable) { color: var(--code-title); }
+.code-theme-sample { margin: 0; padding: .6rem .75rem; overflow-x: auto; border-radius: .5rem; background: var(--code-background); color: var(--code-foreground); }

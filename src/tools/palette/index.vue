@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, Copy, Lock, Unlock } from 'lucide-vue-next'
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
+import PaletteScene from './PaletteScene.vue'
 import RangeField from '../../components/shared/RangeField.vue'
 import ToolWorkspace from '../../components/shared/ToolWorkspace.vue'
 import { useClipboard } from '../../composables/useClipboard'
@@ -105,7 +106,7 @@ async function send(state: PaletteState, to: 'gradient' | 'tokens' | 'background
 </script>
 
 <template>
-  <ToolWorkspace :logic="logic">
+  <ToolWorkspace :logic="logic" :preview-background="false">
     <template #controls="{ state, update }">
       <button v-if="incoming" type="button" class="btn" @click="update(importColors)">Importar colores del conversor</button>
       <div class="field-grid">
@@ -178,6 +179,8 @@ async function send(state: PaletteState, to: 'gradient' | 'tokens' | 'background
 
     <template #preview="{ state, update }">
       <div class="palette-preview">
+        <PaletteScene :swatches="state.swatches" :primary="swatchOf(state)" :vision="state.colorBlindnessPreview" />
+        <h3 class="swatch-heading">{{ label('swatchTitle') }}</h3>
         <div class="swatches" role="group" tabindex="0" :aria-label="label('swatches')" @keydown="keydown($event, update)">
           <article v-for="(color, index) in state.swatches" :key="color.id" class="swatch" @dragover.prevent @drop.prevent="update(d => move(d, dragging, index))">
             <button type="button" class="sample" :style="{ background: simulateVision(color.color, state.colorBlindnessPreview) }"
@@ -223,19 +226,22 @@ async function send(state: PaletteState, to: 'gradient' | 'tokens' | 'background
 </template>
 
 <style scoped>
-.palette-preview { display:grid;gap:1rem;width:100%;min-width:0; }
-.swatches { display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%, 6rem),1fr));gap:.5rem; }
-.swatch { min-width:0;overflow:hidden;border:1px solid var(--line);border-radius:8px;background:var(--surface); }
-.sample { display:block;width:100%;height:4rem;cursor:grab; }
+.palette-preview { display:grid;gap:.85rem;width:100%;min-width:0; }
+.swatch-heading { margin-top:.25rem; }
+.swatches { display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%, 6rem),1fr));gap:.4rem; }
+.swatch { min-width:0;overflow:hidden;border:1px solid var(--line);border-radius:.65rem;background:var(--surface); }
+.sample { display:block;width:100%;height:2.85rem;cursor:grab; }
 .sample[aria-pressed=true] { box-shadow:inset 0 0 0 2px white,inset 0 0 0 4px #192c26; }
 .sample:focus-visible { outline-offset:-4px; }
-.swatch-info { padding:.35rem;display:grid;gap:.15rem;overflow-wrap:anywhere;font-size:.83rem; }
+.swatch-info { padding:.4rem;display:grid;gap:.15rem;overflow-wrap:anywhere;font-size:.74rem; }
+.swatch-info code { font-size:.73rem;color:var(--muted); }
 .swatch-info .actions { gap:.1rem; }
 .swatch-info .icon-btn { min-width:32px;min-height:32px;padding:.2rem; }
 .inspector { min-width:0;border:1px solid var(--line);border-radius:8px;padding:.65rem;margin:.75rem 0; }
 .palette-actions { margin-top:.65rem; }
-.contrast { color:var(--text);background:var(--surface);padding:.55rem;border-radius:8px;min-width:0; }
-.contrast summary { cursor:pointer; }
+.contrast { color:var(--text);background:var(--surface);padding:.62rem;border:1px solid var(--line);border-radius:.65rem;min-width:0; }
+.contrast summary { cursor:pointer;font-weight:650;font-size:.84rem; }
+.contrast > label { width:max-content;max-width:100%;margin-block:.45rem; }
 .contrast-table { overflow:auto;margin-top:.55rem;max-height:23rem; }
 table { border-collapse:collapse;font-size:.8rem; }
 th,td { border:1px solid var(--line);min-width:5.5rem;padding:.35rem;vertical-align:top;text-align:left; }

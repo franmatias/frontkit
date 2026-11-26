@@ -12,6 +12,14 @@ test('uses local font fallbacks until consent and lets the user revoke it',async
   expect(new URL(requests[0]!).searchParams.getAll('family')).toContain('Playfair Display:wght@800')
   await page.goto('settings')
   await page.getByLabel('Permitir Google Fonts en las vistas previas').uncheck()
+  await expect.poll(() => page.evaluate(() => new Promise(resolve => {
+    const open = indexedDB.open('frontkit')
+    open.onsuccess = () => {
+      const db = open.result
+      const request = db.transaction('kv').objectStore('kv').get('consent:google-fonts')
+      request.onsuccess = () => { resolve(request.result?.state); db.close() }
+    }
+  }))).toBe(false)
   await page.goto('tools/font-pairing')
   await expect(page.getByText('Vista con fuentes del sistema')).toBeVisible()
   await expect(page.locator('head link[href*="fonts.googleapis.com"]')).toHaveCount(0)

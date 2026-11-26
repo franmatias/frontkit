@@ -5,6 +5,8 @@ import javascript from 'highlight.js/lib/languages/javascript'
 import xml from 'highlight.js/lib/languages/xml'
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import type { editorFonts } from '../../stores/settings'
+import { sourceLimit } from './project'
 import { emmetCompletion, suggestions, type Completion, type Language } from './completions'
 
 const props = defineProps<{
@@ -13,14 +15,22 @@ const props = defineProps<{
   wrap: boolean
   fontSize: number
   tabSize: number
+  disabled: boolean
+  lineNumbers: boolean
+  fontFamily: typeof editorFonts[number]
 }>()
 const { t } = useI18n()
 const hintId = 'emmet-hint-' + props.language
-const emit = defineEmits<{ change: [value: string] }>()
+const emit = defineEmits<{ change: [value: string]; format: [] }>()
 hljs.registerLanguage('xml', xml)
 hljs.registerLanguage('css', css)
 hljs.registerLanguage('javascript', javascript)
 const grammars = { html: 'xml', css: 'css', js: 'javascript' }
+const fonts = {
+  system: 'ui-monospace, Consolas, monospace',
+  consolas: 'Consolas, ui-monospace, monospace',
+  courier: '"Courier New", Courier, monospace',
+}
 const input = ref<HTMLTextAreaElement>()
 const mirror = ref<HTMLDivElement>()
 const gutter = ref<HTMLDivElement>()
@@ -51,10 +61,10 @@ const lines = computed(() => {
   return rows
 })
 function align() {
-  if (!input.value || !mirror.value || !gutter.value) return
+  if (!input.value || !mirror.value) return
   mirror.value.scrollTop = input.value.scrollTop
   mirror.value.scrollLeft = input.value.scrollLeft
-  gutter.value.style.transform = 'translateY(' + -input.value.scrollTop + 'px)'
+  if (gutter.value) gutter.value.style.transform = 'translateY(' + -input.value.scrollTop + 'px)'
 }
 function measure() {
   if (!input.value || !mirror.value) return
@@ -97,6 +107,12 @@ function editing(event: Event) {
 function handleKey(event: KeyboardEvent) {
   const editor = input.value
   if (!editor || event.isComposing) return
+  if (event.altKey && event.shiftKey && !event.ctrlKey && !event.metaKey && event.code === 'KeyF') {
+    event.preventDefault()
+    closeSuggestions()
+    emit('format')
+    return
+  }
   if ((event.ctrlKey || event.metaKey) && !event.altKey && event.code === 'Space') {
     event.preventDefault()
     refreshSuggestions()
@@ -123,7 +139,7 @@ function handleKey(event: KeyboardEvent) {
     closeSuggestions()
   }
 }
-watch(() => [props.value, props.wrap, props.fontSize, props.tabSize], () => nextTick(measure), { flush: 'post' })
+watch(() => [props.value, props.wrap, props.fontSize, props.tabSize, props.lineNumbers, props.fontFamily], () => nextTick(measure), { flush: 'post' })
 onMounted(() => {
   observer = new ResizeObserver(measure)
   if (input.value) observer.observe(input.value)
@@ -132,12 +148,12 @@ onMounted(() => {
 onUnmounted(() => observer?.disconnect())
 </script>
 <template>
-  <div class="source" :style="{fontSize:fontSize+'px', tabSize, '--gutter': Math.max(3, String(lines.length).length + 2) + 'ch'}">
-    <div class="numbers" aria-hidden="true"><div ref="gutter"><div v-for="(_, i) in lines" :key="i" :style="{height: heights[i] ? heights[i] + 'px' : undefined}">{{ i + 1 }}</div></div></div>
+  <div class="source" :style="{fontSize:fontSize+'px', fontFamily:fonts[fontFamily], tabSize, '--gutter': lineNumbers ? Math.max(3, String(lines.length).length + 2) + 'ch' : '0px'}">
+    <div class="numbers" :hidden="!lineNumbers" aria-hidden="true"><div ref="gutter"><div v-for="(_, i) in lines" :key="i" :style="{height: heights[i] ? heights[i] + 'px' : undefined}">{{ i + 1 }}</div></div></div>
     <div class="layers">
       <span :id="hintId" class="sr-only">{{ t(language === 'js' ? 'detail.playground.suggestHint' : 'detail.playground.emmetHint') }}</span>
       <div ref="mirror" class="paint" aria-hidden="true" :class="{wrap}"><div v-for="(row,i) in lines" :key="i" class="line"><span v-for="(token,j) in row" :key="j" :class="token.classes">{{ token.text }}</span><template v-if="!row.length">{{ '\u200b' }}</template></div></div>
-      <textarea ref="input" :aria-label="language.toUpperCase()" :value="value" :aria-describedby="hintId" aria-autocomplete="list" :aria-controls="choice ? listId : undefined" :aria-activedescendant="choice ? listId + '-' + active : undefined" :wrap="wrap ? 'soft' : 'off'" spellcheck="false" autocapitalize="off" autocomplete="off" maxlength="120000" @scroll="align" @keydown="handleKey" @input="editing" @compositionend="refreshSuggestions" @blur="closeSuggestions" @click="closeSuggestions" />
+      <textarea ref="input" :disabled="disabled" :aria-label="language.toUpperCase()" :value="value" :aria-describedby="hintId" aria-autocomplete="list" :aria-controls="choice ? listId : undefined" :aria-activedescendant="choice ? listId + '-' + active : undefined" :wrap="wrap ? 'soft' : 'off'" spellcheck="false" autocapitalize="off" autocomplete="off" :maxlength="sourceLimit" @scroll="align" @keydown="handleKey" @input="editing" @compositionend="refreshSuggestions" @blur="closeSuggestions" @click="closeSuggestions" />
       <div v-if="choice" class="suggestions">
         <ul :id="listId" role="listbox" :aria-label="t('detail.playground.suggestions')">
           <li v-for="(item, index) in completions" :id="listId + '-' + index" :key="item.kind + item.label" role="option" :aria-selected="index === active"
@@ -149,28 +165,24 @@ onUnmounted(() => observer?.disconnect())
   </div>
 </template>
 <style scoped>
-.source { display:grid;grid-template-columns:var(--gutter) minmax(0,1fr);min-height:0;flex:1;color:#dbe7e1;background:#14231e;font-family:ui-monospace,Consolas,monospace;line-height:1.55;font-variant-ligatures:none; }
+.source { display:grid;grid-template-columns:var(--gutter) minmax(0,1fr);min-height:0;flex:1;color:var(--code-foreground);background:var(--code-background);font-family:ui-monospace,Consolas,monospace;line-height:1.55;font-variant-ligatures:none; }
+.layers { grid-column:2; }
 .layers,.numbers { position:relative;min-width:0;min-height:0;overflow:hidden; }
-.numbers { background:#12201b;color:#90a89a;text-align:right;border-right:1px solid #2e4037;user-select:none; }
+.numbers { background:var(--code-gutter);color:var(--code-muted);text-align:right;border-right:1px solid var(--code-line);user-select:none; }
 .numbers>div { padding:.65rem .45ch; }
 .paint,textarea { position:absolute;inset:0;margin:0;padding:.65rem .7rem;box-sizing:border-box;border:0;font:inherit;letter-spacing:normal;tab-size:inherit; }
 .paint { overflow:hidden;pointer-events:none; }
 .line { white-space:pre;min-height:1lh; }
 .wrap .line { white-space:pre-wrap;overflow-wrap:break-word; }
-textarea { width:100%;height:100%;background:transparent;color:transparent;caret-color:white;resize:none;-webkit-text-fill-color:transparent; }
-textarea:focus-visible { outline:2px solid #83ccab;outline-offset:-2px; }
-textarea::selection { background:#749cd355; }
-.hljs-comment,.hljs-quote { color:#9cad9f; }
-.hljs-keyword,.hljs-selector-tag,.hljs-tag,.hljs-name { color:#f19db2; }
-.hljs-string,.hljs-attr,.hljs-selector-class { color:#c4dc98; }
-.hljs-number,.hljs-literal,.hljs-attribute { color:#f7c38b; }
-.hljs-title,.hljs-built_in,.hljs-selector-id { color:#95cdf8; }
+textarea { width:100%;height:100%;background:transparent;color:transparent;caret-color:var(--code-foreground);resize:none;-webkit-text-fill-color:transparent; }
+textarea:focus-visible { outline:2px solid var(--code-focus);outline-offset:-2px; }
+textarea::selection { background:var(--code-selection); }
 @media (forced-colors:active) { textarea { color:CanvasText;-webkit-text-fill-color:CanvasText;background:Canvas;caret-color:CanvasText; } }
 
-.suggestions { position:absolute;z-index:2;bottom:.5rem;left:.6rem;right:.6rem;max-width:26rem;background:#22372f;border:1px solid #698579;border-radius:6px;color:#eef6f1;box-shadow:0 4px 16px #0008;font-size:.85em; }
+.suggestions { position:absolute;z-index:2;bottom:.5rem;left:.6rem;right:.6rem;max-width:26rem;background:var(--code-gutter);border:1px solid var(--code-line);border-radius:6px;color:var(--code-foreground);box-shadow:0 4px 16px #0008;font-size:.85em; }
 .suggestions ul { list-style:none;padding:0;margin:0;max-height:6.7rem;overflow:auto; }
 .suggestions li { display:flex;justify-content:space-between;gap:.5rem;padding:.18rem .55rem;cursor:pointer; }
-.suggestions li[aria-selected=true] { background:#36594c; }
-.suggestions small { color:#b3d6c5; }
-.suggestion-preview { white-space:pre-wrap;overflow-wrap:anywhere;max-height:3.7rem;overflow:auto;margin:0;padding:.24rem .55rem;border-top:1px solid #698579; }
+.suggestions li[aria-selected=true] { background:var(--code-selection); }
+.suggestions small { color:var(--code-muted); }
+.suggestion-preview { white-space:pre-wrap;overflow-wrap:anywhere;max-height:3.7rem;overflow:auto;margin:0;padding:.24rem .55rem;border-top:1px solid var(--code-line); }
 </style>

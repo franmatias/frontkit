@@ -1,0 +1,117 @@
+import { expect, test } from '@playwright/test'
+
+test('formats three languages and keeps invalid input intact when formatting again', async ({ page }) => {
+  await page.goto('tools/playground')
+  await page.getByRole('button', { name: 'Cuadrícula', exact: true }).click()
+  const editor = (name: string) => page.getByRole('textbox', { name, exact: true })
+  await editor('HTML').fill('<section><p>Hola</p><p>Adiós</p></section>')
+  await editor('CSS').fill('p{color:red}')
+  await editor('JS').fill('function announce(){console.log("listo")}announce()')
+  await page.getByRole('button', { name: 'Formatear todo', exact: true }).click()
+  await expect(editor('HTML')).toHaveValue('<section>\n  <p>Hola</p>\n  <p>Adiós</p>\n</section>\n')
+  await expect(editor('CSS')).toHaveValue('p {\n  color: red;\n}\n')
+  await expect(editor('JS')).toHaveValue("function announce() {\n  console.log('listo')\n}\nannounce()\n")
+  await expect(page.locator('.console-output')).toContainText('listo')
+  await editor('JS').fill('const incomplete =')
+  await page.getByRole('button', { name: 'Formatear JS', exact: true }).click()
+  await expect(page.getByText(/No se pudo formatear JS/)).toBeVisible()
+  await expect(editor('JS')).toHaveValue('const incomplete =')
+  await editor('CSS').fill('p{margin:0}')
+  await editor('CSS').press('Alt+Shift+F')
+  await expect(editor('CSS')).toHaveValue('p {\n  margin: 0;\n}\n')
+})
+
+test('persists a syntax theme and applies its palette to the editor and code output', async ({ page }) => {
+  await page.goto('settings')
+  const theme = page.getByRole('combobox', { name: 'Tema de resaltado de sintaxis' })
+  await theme.selectOption('paper')
+  await expect(page.locator('.code-theme-sample .hljs-keyword')).toHaveCSS('color', 'rgb(144, 34, 83)')
+  await page.reload()
+  await expect(theme).toHaveValue('paper')
+  await page.goto('tools/playground')
+  await expect(page.locator('.studio')).toHaveAttribute('data-code-theme', 'paper')
+  await expect(page.locator('#source-html .hljs-name').first()).toHaveCSS('color', 'rgb(144, 34, 83)')
+  await page.goto('tools/gradient')
+  await expect(page.locator('.code-box')).toHaveAttribute('data-code-theme', 'paper')
+})
+
+test('reclaims column space when folding editors above or below the preview', async ({ page }) => {
+  await page.goto('tools/playground')
+  for (const view of ['Vista debajo', 'Vista encima']) {
+    await page.getByRole('button', { name: view, exact: true }).click()
+    const html = page.locator('[data-language="html"]')
+    const css = page.locator('[data-language="css"]')
+    const original = (await html.boundingBox())!.width
+    await css.getByRole('button', { name: 'Plegar CSS', exact: true }).click()
+    expect((await css.boundingBox())!.width).toBeLessThan(55)
+    expect((await html.boundingBox())!.width).toBeGreaterThan(original)
+    await expect(css.locator('.pane-label')).toHaveCSS('writing-mode', 'vertical-rl')
+    await expect(page.getByRole('separator', { name: 'Ajustar ancho entre HTML y JS' })).toBeVisible()
+    await page.getByRole('button', { name: 'Plegar HTML', exact: true }).click()
+    await page.getByRole('button', { name: 'Plegar JS', exact: true }).click()
+    expect((await page.locator('.editors').boundingBox())!.height).toBeLessThan(60)
+    for (const language of ['HTML', 'CSS', 'JS']) {
+      await page.getByRole('button', { name: 'Desplegar ' + language, exact: true }).click()
+    }
+  }
+})
+
+test('creates an interactive example and imports JSON through the project button', async ({ page }) => {
+  await page.goto('tools/playground')
+  await page.setViewportSize({ width: 1440, height: 960 })
+  const projects = page.locator('.projects-panel')
+  await projects.locator('summary').click()
+  const template = projects.getByRole('combobox', { name: 'Plantilla', exact: true })
+  await expect(template.locator('option')).toHaveCount(9)
+  const bottoms = await projects.locator('button, select').evaluateAll(controls => controls.map(control => control.getBoundingClientRect().bottom))
+  expect(Math.max(...bottoms) - Math.min(...bottoms)).toBeLessThan(2)
+  await page.setViewportSize({ width: 390, height: 844 })
+  await expect.poll(() => projects.evaluate(panel => panel.scrollWidth - panel.clientWidth)).toBeLessThan(2)
+  await page.setViewportSize({ width: 1440, height: 960 })
+  await template.selectOption('tasks')
+  page.once('dialog', dialog => dialog.accept('Mi lista interactiva'))
+  await projects.getByRole('button', { name: 'Crear proyecto', exact: true }).click()
+  const preview = page.frameLocator('.result iframe')
+  await preview.getByLabel('Nueva tarea').fill('Preparar ejemplo')
+  await preview.getByRole('button', { name: 'Añadir', exact: true }).click()
+  await expect(preview.getByRole('status')).toHaveText('Tareas pendientes: 2')
+  await preview.getByRole('checkbox', { name: 'Preparar ejemplo' }).check()
+  await expect(preview.getByRole('status')).toHaveText('Tareas pendientes: 1')
+
+  await expect(projects.locator('input[type=file]')).toBeHidden()
+  const event = page.waitForEvent('filechooser')
+  await projects.getByRole('button', { name: 'Importar proyecto JSON', exact: true }).click()
+  await (await event).setFiles({ name: 'proyecto.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({
+    id: '95fbb066-12e6-4340-a3e9-bdb21cc511e1', schemaVersion: 1, name: 'Proyecto importado', createdAt: 1, updatedAt: 1,
+    layout: 'columns', html: '<h1>Desde JSON</h1>', css: '', js: '',
+  })) })
+  await expect(page.getByRole('heading', { name: 'Proyecto importado', exact: true })).toBeVisible()
+  await expect(preview.locator('h1')).toHaveText('Desde JSON')
+})
+
+test('opens and exits full screen while keeping the running preview', async ({ page }) => {
+  await page.goto('tools/playground')
+  const preview = page.frameLocator('.result iframe')
+  const heading = preview.locator('h1')
+  await expect(heading).toHaveText('FrontKit')
+  await heading.evaluate(element => { element.textContent = 'Sesión en curso' })
+  await page.getByRole('button', { name: 'Pantalla completa', exact: true }).click()
+  const exit = page.getByRole('button', { name: 'Salir de pantalla completa', exact: true })
+  await expect(exit).toHaveAttribute('aria-pressed', 'true')
+  await expect(heading).toHaveText('Sesión en curso')
+  const size = await page.locator('.studio').boundingBox()
+  expect(size!.width).toBeGreaterThan((page.viewportSize()?.width ?? 0) - 10)
+  await exit.click()
+  await expect(page.getByRole('button', { name: 'Pantalla completa', exact: true })).toBeVisible()
+  await expect(heading).toHaveText('Sesión en curso')
+})
+
+test('uses the viewport fallback when native full screen is unavailable', async ({ page }) => {
+  await page.addInitScript(() => Object.defineProperty(document, 'fullscreenEnabled', { value: false }))
+  await page.goto('tools/playground')
+  await page.getByRole('button', { name: 'Pantalla completa', exact: true }).click()
+  await expect(page.locator('.studio')).toHaveClass(/is-immersive/)
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.studio')).not.toHaveClass(/is-immersive/)
+  await expect(page.getByRole('button', { name: 'Pantalla completa', exact: true })).toBeFocused()
+})

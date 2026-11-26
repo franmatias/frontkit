@@ -71,8 +71,8 @@ defineExpose({ copyCode })
     <div class="output-tabs" :aria-label="t('tool.output')">
       <button v-for="key in keys" :key="key" class="btn pill" type="button" :aria-pressed="active === key" @click="current = key">{{ t('tool.' + key) }}</button>
     </div>
-    <button v-if="settings.data.preferences.autoCopyOnClick" type="button" class="code-box code-button" :aria-label="t('tool.copy')" @click="copyCode"><code>{{ code }}</code></button>
-    <pre v-else class="code-box"><code><span v-for="(segment, index) in segments" :key="index" :class="segment.classes">{{ segment.text }}</span></code></pre>
+    <button v-if="settings.data.preferences.autoCopyOnClick" type="button" class="code-box code-button" :data-code-theme="settings.data.editor.syntaxTheme" :aria-label="t('tool.copy')" @click="copyCode"><code>{{ code }}</code></button>
+    <pre v-else class="code-box" :data-code-theme="settings.data.editor.syntaxTheme"><code><span v-for="(segment, index) in segments" :key="index" :class="segment.classes">{{ segment.text }}</span></code></pre>
     <p class="stats">{{ n(code.split('\n').length) }} {{ t('tool.lines') }} · {{ n(code.length) }} {{ t('tool.chars') }}</p>
   </section>
 </template>

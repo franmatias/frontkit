@@ -1,0 +1,26 @@
+
+import { expect, test } from '@playwright/test'
+
+test('protege muestras, exporta una escala y confirma el envío a Gradiente', async ({ page }) => {
+  await page.goto('./tools/palette')
+  const swatches = page.locator('.swatch')
+  await expect(swatches).toHaveCount(5)
+  const first = await swatches.first().locator('code').textContent()
+  await page.getByRole('button', { name: 'Bloquear color-1' }).click()
+  await page.getByRole('button', { name: 'Generar al azar' }).click()
+  await expect(swatches.first().locator('code')).toHaveText(first!)
+  await page.getByRole('combobox', { name: 'Modo de paleta' }).selectOption('scale')
+  await expect(swatches).toHaveCount(11)
+  await page.getByRole('button', { name: 'Tailwind', exact: true }).click()
+  await expect(page.locator('pre')).toContainText('@theme')
+  await expect(page.locator('pre')).toContainText('--color-brand-950')
+  await page.getByText('Matriz de contraste', { exact: true }).first().click()
+  await page.getByRole('combobox', { name: 'Método de contraste' }).selectOption('apca')
+  await expect(page.getByRole('table')).toBeVisible()
+  await page.getByRole('button', { name: 'Enviar a Gradiente' }).click()
+  const importButton = page.getByRole('button', { name: 'Importar desde Paleta' })
+  await expect(importButton).toBeVisible()
+  await importButton.click()
+  await expect(importButton).toBeHidden()
+  await expect(page).toHaveURL(/\/tools\/gradient$/)
+})

@@ -24,7 +24,11 @@
   "exportHtml": "Exportar HTML",
   "exportJson": "Exportar JSON",
   "large": "El enlace supera el límite. Exporta el proyecto como archivo HTML o JSON.",
+  "resizeEditors": "Ajustar ancho entre {left} y {right}",
   "split": "Ancho del editor",
+  "command": "Escribe JavaScript en la consola",
+  "executeCommand": "Evaluar",
+  "emmetHint": "Usa las flechas para elegir una sugerencia y Tab o Intro para aceptarla. Ctrl+Espacio abre las sugerencias. Tab expande abreviaturas Emmet.",
   "console": "Consola",
   "errors": "errores",
   "warnings": "avisos",
@@ -41,5 +45,15 @@
     "columns": "Vista debajo",
     "bottom": "Vista encima",
     "tabs": "Pestañas"
+  },
+  "suggestHint": "Ctrl+Espacio abre las sugerencias. Usa las flechas para elegir y Tab o Intro para aceptar.",
+  "suggestions": "Sugerencias de código",
+  "kinds": {
+    "tag": "Etiqueta",
+    "attribute": "Atributo",
+    "property": "Propiedad",
+    "value": "Valor",
+    "script": "JavaScript",
+    "emmet": "Emmet"
   }
 }

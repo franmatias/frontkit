@@ -8,7 +8,7 @@ import { useClipboard } from '../../composables/useClipboard'
 import { download } from '../../lib/download'
 import { useSettingsStore } from '../../stores/settings'
 
-const props = defineProps<{ outputs: Record<string, string>; name: string }>()
+const props = defineProps<{ outputs: Record<string, string>; name: string; extensions?: Record<string, string> }>()
 const { t, n } = useI18n()
 const copy = useClipboard()
 const settings = useSettingsStore()
@@ -22,7 +22,7 @@ const code = computed(() => props.outputs[active.value] ?? '')
 highlight.registerLanguage('css', css)
 type Segment = { text: string; classes: string }
 const segments = computed<Segment[]>(() => {
-  if (active.value !== 'css') return [{ text: code.value, classes: '' }]
+  if (active.value !== 'css' || code.value.length > 100_000) return [{ text: code.value, classes: '' }]
   const rendered = highlight.highlight(code.value, { language: 'css' }).value
   const parsed = new DOMParser().parseFromString(rendered, 'text/html')
   const result: Segment[] = []
@@ -51,7 +51,7 @@ defineExpose({ copyCode })
     <div class="panel-top"><h2 :id="heading">{{ t('tool.output') }}</h2>
       <div class="actions">
         <button class="btn" type="button" @click="copyCode"><Check v-if="copied" :size="16" /><Copy v-else :size="16" /> {{ t('tool.copy') }}</button>
-        <button class="btn" type="button" @click="download(name + (active === 'tailwind' ? '.txt' : '.' + active), code, 'text/plain')"><Download :size="16" /> {{ t('tool.download') }}</button>
+        <button class="btn" type="button" @click="download(name + (extensions?.[active] ?? ((active === 'tailwind' || active === 'plaintext') ? '.txt' : '.' + active)), code, 'text/plain')"><Download :size="16" /> {{ t('tool.download') }}</button>
       </div>
     </div>
     <div class="output-tabs" :aria-label="t('tool.output')">

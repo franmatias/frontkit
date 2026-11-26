@@ -4,6 +4,7 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "paths": { "emmet": ["./node_modules/emmet/dist/index.d.ts"] },
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

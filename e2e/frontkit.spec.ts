@@ -68,3 +68,20 @@ for (const id of ['gradient', 'shadow', 'border']) {
     }
   })
 }
+
+for (const id of ['layout', 'palette', 'tokens', 'transform', 'filter', 'animation', 'css-minifier']) {
+  test('auditoría de accesibilidad de ' + id, async ({ page }) => {
+    await page.goto('./tools/' + id)
+    await expect(page.getByRole('heading', { name: 'Código generado' })).toBeVisible()
+    const result = await new AxeBuilder({ page }).analyze()
+    expect(result.violations.filter(item => item.impact === 'serious' || item.impact === 'critical')).toEqual([])
+  })
+}
+
+test('la segunda ampliación abre sus siete rutas TODO', async ({ page }) => {
+  const ids = ['color-converter', 'encoders', 'css-reset', 'transitions', 'container-queries', 'image-optimizer', 'a11y-audit']
+  for (const id of ids) {
+    await page.goto('./tools/' + id)
+    await expect(page.locator('main .page-intro')).toContainText('TODO')
+  }
+})

@@ -1,5 +1,7 @@
 {
   "app": {
+    "updateReady": "Nueva versión disponible",
+    "updateNow": "Actualizar",
     "name": "FrontKit",
     "catalog": "Catálogo",
     "menu": "Menú",
@@ -93,6 +95,7 @@
     "autoCopyOnClick": "Copiar al pulsar el código",
     "showTailwindByDefault": "Mostrar Tailwind primero",
     "colorContrastMethod": "Método de contraste",
+    "rememberInput": "Recordar el contenido de entrada",
     "defaultColorFormat": "Formato de color",
     "defaultUnit": "Unidad"
   },
@@ -109,6 +112,18 @@
     "preview": "Vista previa",
     "output": "Código generado",
     "css": "CSS",
+    "scss": "SCSS",
+    "json": "JSON",
+    "csv": "CSV",
+    "ndjson": "NDJSON",
+    "tableDraft": "Se ha preparado un esquema con {count} filas para el constructor de tablas.",
+    "jsonCompact": "JSON minificado",
+    "jsonPatch": "JSON Patch",
+    "typescript": "TypeScript",
+    "markdown": "Markdown",
+    "plaintext": "Texto plano",
+    "sendTokens": "Enviar a Tokens",
+    "html": "HTML",
     "tailwind": "Tailwind",
     "copy": "Copiar",
     "download": "Descargar",
@@ -366,6 +381,55 @@
       "description": "Explorar el apilamiento y el comportamiento de position: sticky.",
       "tags": {
         "main": "Contextos de apilamiento"
+      }
+    },
+    "color-converter": {
+      "name": "Conversor de color",
+      "description": "Convierte colores CSS y compara gamut y contraste.",
+      "tags": {
+        "main": "color conversion oklch gamut contraste"
+      }
+    },
+    "encoders": {
+      "name": "Codificadores y utilidades de texto",
+      "description": "Trabaja con Base64, URL, entidades, hash, identificadores, fechas y expresiones regulares.",
+      "tags": {
+        "main": "base64 url hash uuid regex"
+      }
+    },
+    "css-reset": {
+      "name": "Generador de CSS Reset",
+      "description": "Compone un reset a medida y comprueba sus efectos en una página de muestra.",
+      "tags": {
+        "main": "reset preflight normalización"
+      }
+    },
+    "transitions": {
+      "name": "Transiciones y animaciones por scroll",
+      "description": "Configura transiciones, desplazamiento por puntos de parada y animaciones vinculadas al scroll.",
+      "tags": {
+        "main": "transiciones scroll snap timeline"
+      }
+    },
+    "container-queries": {
+      "name": "Container Queries y {'@'}scope",
+      "description": "Genera consultas de contenedor y explora ámbitos de CSS.",
+      "tags": {
+        "main": "container queries scope maquetación"
+      }
+    },
+    "image-optimizer": {
+      "name": "Optimizador de imágenes",
+      "description": "Convierte, redimensiona y prepara imágenes adaptables en local.",
+      "tags": {
+        "main": "imágenes webp avif optimización"
+      }
+    },
+    "a11y-audit": {
+      "name": "Auditor de accesibilidad HTML",
+      "description": "Revisa fragmentos HTML y localiza problemas de accesibilidad en la vista previa.",
+      "tags": {
+        "main": "accesibilidad html axe contraste"
       }
     }
   }

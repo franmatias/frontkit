@@ -1,0 +1,23 @@
+{
+  "property": "Propiedad CSS",
+  "unit": "Unidad de salida",
+  "row": "Tamaño seleccionado",
+  "minViewport": "Viewport inicial (px)",
+  "maxViewport": "Viewport final (px)",
+  "root": "Tamaño raíz (px)",
+  "invalidViewport": "El viewport final debe ser mayor que el inicial.",
+  "name": "Nombre del tamaño",
+  "badName": "Usa un nombre único con minúsculas, números y guiones.",
+  "start": "Valor en viewport inicial (px)",
+  "end": "Valor en viewport final (px)",
+  "add": "Añadir tamaño",
+  "remove": "Eliminar tamaño",
+  "zoom": "La relación entre los tamaños supera 2,5. Es un aviso orientativo. Comprueba el cambio de tamaño del texto al 200 %.",
+  "viewport": "Simulación del ancho de pantalla (px)",
+  "value": "Valor calculado",
+  "graph": "Gráfico del valor frente al ancho de pantalla. Los extremos indican los límites del intervalo.",
+  "compare": "Comparar con un valor fijo",
+  "fixed": "Valor fijo (px)",
+  "fluidSample": "Muestra fluida",
+  "fixedSample": "Muestra fija"
+}

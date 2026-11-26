@@ -1,13 +1,41 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import RangeField from '../../components/shared/RangeField.vue'
 import ToolWorkspace from '../../components/shared/ToolWorkspace.vue'
+import { receivePalette } from '../../core/storage/palette-handoff'
+import { remove } from '../../core/storage/db'
 import { sliderKey } from '../../lib/a11y'
 import { clamp } from '../../lib/css'
-import { addStop, gradientTypes, hueModes, image, logic, polar, radialSizes, sortedStops, spaces, type GradientState, type Stop } from './logic'
+import { addStop, newStop, gradientTypes, hueModes, image, logic, polar, radialSizes, sortedStops, spaces, type GradientState, type Stop } from './logic'
 
 const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
+const importedPalette = ref<Awaited<ReturnType<typeof receivePalette>>>()
+watch(() => route.query.handoff, async (id, _, onCleanup) => {
+  let current = true
+  onCleanup(() => { current = false })
+  const data = await receivePalette('gradient', id).catch(() => undefined)
+  if (current) importedPalette.value = data
+}, { immediate: true })
+function clearHandoff() {
+  const id = route.query.handoff
+  importedPalette.value = undefined
+  if (typeof id === 'string') void remove('handoff', 'inbox:' + id).catch(() => {})
+  const query = { ...route.query }
+  delete query.handoff
+  void router.replace({ query, hash: route.hash })
+}
+function importPalette(state: GradientState) {
+  const colors = importedPalette.value
+  if (!colors) return
+  state.stops = colors.map(({ color }, i) => newStop(color, 100 * i / (colors.length - 1)))
+  state.hints = []
+  selected.value = state.stops[0].id
+  clearHandoff()
+}
 const selected = ref('')
 let dragging = ''
 let draggingControl: 'angle' | 'center' | undefined
@@ -108,6 +136,15 @@ function startGeometry(event: PointerEvent, kind: 'angle' | 'center', update: Up
 <template>
   <ToolWorkspace :logic="logic" :supported="supported">
     <template #controls="{ state, update }">
+      <div v-if="importedPalette" class="notice">
+        <div class="actions">
+          <span v-for="item in importedPalette" :key="item.name" class="badge" :style="{ borderLeft: '8px solid ' + item.color }">{{ item.name }}</span>
+        </div>
+        <div class="actions">
+          <button class="btn" type="button" @click="update(importPalette)">{{ key('palette') }}</button>
+          <button class="btn" type="button" @click="clearHandoff">{{ t('tool.discard') }}</button>
+        </div>
+      </div>
       <div class="field-grid">
         <label>{{ key('type') }}<select :value="state.type" @change="update(d => { d.type = value($event) as GradientState['type'] })">
           <option v-for="type in gradientTypes" :key="type" :value="type">{{ key('types.' + type) }}</option>

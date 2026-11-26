@@ -24,5 +24,7 @@ jobs:
       - run: pnpm test --run
       - run: pnpm build
       - run: pnpm bundle:check
+      - run: node --test scripts/offline.spec.mjs
       - run: pnpm exec playwright install --with-deps chromium firefox webkit
       - run: pnpm test:e2e
+      - run: pnpm dlx @lhci/cli@0.15.1 autorun

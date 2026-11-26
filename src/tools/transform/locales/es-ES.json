@@ -1,0 +1,21 @@
+{
+  "mode": "Dimensiones",
+  "unit": "Unidad de traslación X/Y",
+  "lock": "Vincular escalas",
+  "operations": "Funciones de transformación",
+  "neutral": "Restablecer",
+  "order": "Orden de aplicación",
+  "notice": "Cambiar el orden cambia el resultado. Tailwind usa un valor arbitrario cuando se combinan funciones para conservar el orden.",
+  "up": "Subir",
+  "down": "Bajar",
+  "origin": "Origen de transformación",
+  "originX": "Origen X (%)",
+  "originY": "Origen Y (%)",
+  "originZ": "Origen Z (px)",
+  "scene": "Perspectiva y escena",
+  "distance": "Perspectiva (px)",
+  "perspectiveX": "Punto de fuga X (%)",
+  "perspectiveY": "Punto de fuga Y (%)",
+  "grid": "Mostrar rejilla",
+  "backface": "Ocultar cara posterior"
+}

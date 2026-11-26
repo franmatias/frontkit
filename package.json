@@ -10,7 +10,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/licenses.mjs && vite build && node scripts/copy-404.mjs",
+    "new:tool": "node scripts/new-tool.mjs",
+    "build": "node scripts/licenses.mjs && vite build && node scripts/copy-404.mjs && node scripts/build-offline.mjs",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit",
     "lint": "biome lint .",
@@ -23,10 +24,12 @@
   "dependencies": {
     "acorn": "8.15.0",
     "culori": "4.0.2",
+    "emmet": "2.4.11",
     "highlight.js": "11.11.1",
     "idb": "8.0.3",
     "lucide-vue-next": "0.468.0",
     "lz-string": "1.5.0",
+    "postcss": "8.5.33",
     "pinia": "3.0.4",
     "valibot": "1.2.0",
     "vue": "3.5.44",

@@ -12,7 +12,9 @@ const payload = v.strictObject({
 export const shareLimit = 8000
 
 export function encodeShare<S>(tool: ToolLogic<S>, state: S) {
-  const encoded = lzString.compressToEncodedURIComponent(JSON.stringify({ v: tool.schemaVersion, t: tool.id, s: state }))
+  const shared = tool.shareExclude?.length ? { ...state } : state
+  for (const key of tool.shareExclude ?? []) delete shared[key]
+  const encoded = lzString.compressToEncodedURIComponent(JSON.stringify({ v: tool.schemaVersion, t: tool.id, s: shared }))
   if (encoded.length > shareLimit) throw new Error('Share limit')
   return '#s=' + encoded
 }

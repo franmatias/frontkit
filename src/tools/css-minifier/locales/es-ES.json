@@ -1,0 +1,20 @@
+{
+  "mode": "Modo",
+  "minify": "Minificar",
+  "clean": "Formatear",
+  "indentSize": "Espacios de sangría",
+  "removeComments": "Quitar comentarios salvo licencias",
+  "removeEmptyRules": "Quitar reglas vacías",
+  "restructure": "Quitar declaraciones idénticas consecutivas",
+  "limit": "Hasta 2 MiB. El CSS se procesa en tu navegador y solo se guardan las opciones.",
+  "input": "CSS de entrada",
+  "pick": "Seleccionar o arrastrar archivo CSS",
+  "process": "Procesar",
+  "cancel": "Cancelar",
+  "running": "Procesando CSS…",
+  "tooLarge": "El CSS supera el límite de 2 MiB.",
+  "workerError": "No se pudo iniciar el procesamiento. Vuelve a intentarlo.",
+  "invalidFile": "Selecciona un archivo CSS válido.",
+  "saving": "Ahorro",
+  "goTo": "Ir a línea y columna"
+}

@@ -4,7 +4,7 @@ import { extname, resolve, sep } from 'node:path'
 
 const base = '/frontkit/'
 const root = resolve('dist')
-const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.json': 'application/json' }
+const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.json': 'application/json', '.webmanifest': 'application/manifest+json' }
 createServer(async (request, response) => {
   const path = new URL(request.url, 'http://localhost').pathname
   if (!path.startsWith(base)) {
@@ -23,4 +23,4 @@ createServer(async (request, response) => {
     const fallback = await readFile(resolve(root, '404.html')).catch(() => '')
     response.writeHead(404, { 'Content-Type': 'text/html' }).end(fallback)
   }
-}).listen(4173, '127.0.0.1')
+}).listen(4173, '127.0.0.1', () => console.log('FrontKit preview ready'))

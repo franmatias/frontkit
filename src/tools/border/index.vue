@@ -2,9 +2,10 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import RangeField from '../../components/shared/RangeField.vue'
+import SendStyleButton from '../../components/shared/SendStyleButton.vue'
 import ToolWorkspace from '../../components/shared/ToolWorkspace.vue'
 import { clamp } from '../../lib/css'
-import { declarations, logic, sides, styles, units, type BorderState, type Side } from './logic'
+import { declarations, logic, radiusValue, sides, styles, units, type BorderState, type Side } from './logic'
 
 const { t } = useI18n()
 const selected = ref<(typeof sides)[number]>('top')
@@ -64,6 +65,7 @@ function drag(event: PointerEvent, state: BorderState, axis: Axis, corner: Corne
 <template>
   <ToolWorkspace :logic="logic">
     <template #controls="{ state, update }">
+      <SendStyleButton from="border" :value="radiusValue(state)" />
       <label class="check"><input type="checkbox" :checked="state.border.linked" @change="update(d => link(d, checked($event)))" />{{ key('linked') }}</label>
       <div v-if="!state.border.linked" class="actions">
         <button v-for="side in sides" :key="side" type="button" class="btn pill" :aria-pressed="selected === side" @click="selected = side">{{ key(side) }}</button>

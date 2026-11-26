@@ -1,0 +1,22 @@
+import { expect, test } from '@playwright/test'
+
+test('edita Grid, genera reglas responsive y cambia a Flexbox', async ({ page }) => {
+  await page.goto('./tools/layout')
+  await expect(page.getByRole('heading', { name: 'Grid y Flexbox' })).toBeVisible()
+  const canvas = page.locator('.canvas')
+  await expect(canvas).toHaveCSS('display', 'grid')
+  await page.getByRole('checkbox', { name: 'Editar puntos de ruptura' }).check()
+  await page.getByLabel('Ancho de la vista previa').selectOption('tablet')
+  await page.getByLabel('Repeticiones').first().fill('2')
+  await page.getByLabel('Repeticiones').first().blur()
+  await page.getByRole('button', { name: 'CSS', exact: true }).click()
+  await expect(page.locator('pre')).toContainText('@media (min-width: 768px)')
+  await expect(page.locator('pre')).toContainText('repeat(2, 1fr)')
+  await page.getByRole('button', { name: 'Tailwind', exact: true }).click()
+  await expect(page.locator('pre')).toContainText('md:grid-cols-2')
+  await canvas.getByRole('button', { name: 'Elemento 2', exact: true }).press('Alt+ArrowLeft')
+  await expect(canvas.locator('.tile-select').first()).toHaveText('Elemento 2')
+  await page.getByLabel('Sistema de maquetación').selectOption('flex')
+  await page.getByRole('combobox', { name: 'Dirección', exact: true }).selectOption('column')
+  await expect(canvas).toHaveCSS('flex-direction', 'column')
+})

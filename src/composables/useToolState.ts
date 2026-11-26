@@ -33,7 +33,8 @@ export function useToolState<S extends object>(logic: ToolLogic<S>) {
     if (writeTimer === undefined) return
     clearTimeout(writeTimer)
     writeTimer = undefined
-    const next = state.value
+    const next = { ...state.value }
+    for (const key of logic.transient ?? []) delete next[key]
     saving = true
     try {
       await write('toolStates', logic.id, next, logic.schemaVersion)

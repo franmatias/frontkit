@@ -47,6 +47,18 @@ function bootstrap(source, nonce, guard, loopMessage) {
     }
     window.addEventListener('error', event => console.error(event.error ?? event.message));
     window.addEventListener('unhandledrejection', event => console.error(event.reason));
+    Object.defineProperty(window, guard + '_result', { value(value) {
+        console.log(value);
+    } });
+    window.addEventListener('message', event => {
+        if (event.source !== parent || event.data?.nonce !== nonce || typeof event.data.command !== 'string')
+            return;
+        const command = document.createElement('script');
+        command.nonce = nonce;
+        command.textContent = event.data.command;
+        document.body.append(command);
+        command.remove();
+    });
     const style = document.createElement('style');
     style.textContent = source.css;
     document.head.append(style);

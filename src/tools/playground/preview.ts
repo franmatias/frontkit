@@ -21,12 +21,30 @@ export function protectLoops(source: string, guard: string) {
   return result
 }
 
+function guardName(nonce: string) {
+  return '__frontkit_' + nonce.replaceAll('-', '')
+}
+
+export function consoleScript(source: string, nonce: string, protection: boolean) {
+  const guard = guardName(nonce)
+  const expression = '(' + source + '\n)'
+  let script: string
+  try {
+    parse(expression, { ecmaVersion: 'latest' })
+    script = 'window.' + guard + '_result(' + expression + ')'
+  } catch {
+    parse(source, { ecmaVersion: 'latest' })
+    script = source
+  }
+  return protection ? protectLoops(script, guard) : script
+}
+
 export const levels = ['log', 'info', 'warn', 'error', 'clear'] as const
 export type Level = (typeof levels)[number]
 
 
 export function previewDocument(source: Source, nonce: string, protection: boolean, loopMessage: string) {
-  const guard = '__frontkit_' + nonce.replaceAll('-', '')
+  const guard = guardName(nonce)
   let js = source.js
   let parsed = true
   if (protection) {

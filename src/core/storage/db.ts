@@ -112,12 +112,41 @@ function commit(entries: Change[], clear: readonly Store[] = []) {
   })
 }
 
-export function write(store: Store, key: string, state: unknown, schemaVersion = 1) {
+function requestPersistence() {
   if (!requestedPersistence && database) {
     requestedPersistence = true
     void navigator.storage?.persist?.().catch(() => {})
   }
-  return commit([{ store, key, value: { schemaVersion, state: structuredClone(state), updatedAt: Date.now() } }])
+}
+const record = (state: unknown, schemaVersion = 1): RecordValue => ({ schemaVersion, state: structuredClone(state), updatedAt: Date.now() })
+export function write(store: Store, key: string, state: unknown, schemaVersion = 1) {
+  requestPersistence()
+  return commit([{ store, key, value: record(state, schemaVersion) }])
+}
+const rememberedKeys = ['readability:text', 'json:input'] as const
+export function writeSettings(state: unknown, rememberInput: boolean) {
+  requestPersistence()
+  const entries: Change[] = [{ store: 'kv', key: 'settings', value: record(state) }]
+  if (!rememberInput) for (const key of rememberedKeys) entries.push({ store: 'kv', key })
+  return commit(entries)
+}
+function permitsRemembering(current: unknown) {
+  if (!current || typeof current !== 'object' || !('preferences' in current)) return true
+  const preferences = current.preferences
+  return !preferences || typeof preferences !== 'object' || !('rememberInput' in preferences) || preferences.rememberInput !== false
+}
+export function writeRememberedInput(key: (typeof rememberedKeys)[number], state: unknown) {
+  const value = record(state)
+  return enqueue(async () => {
+    if (database) {
+      const tx = database.transaction('kv', 'readwrite')
+      const settings = await tx.store.get('settings')
+      if (permitsRemembering(settings?.state)) await tx.store.put(value, key)
+      await tx.done
+    } else if (permitsRemembering(memory.kv.settings?.state)) {
+      memory.kv[key] = value
+    }
+  })
 }
 
 export const remove = (store: Store, key: string) => commit([{ store, key }])

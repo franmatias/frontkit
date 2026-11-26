@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import RangeField from '../../components/shared/RangeField.vue'
+import SendStyleButton from '../../components/shared/SendStyleButton.vue'
 import ToolWorkspace from '../../components/shared/ToolWorkspace.vue'
 import { move } from '../../lib/a11y'
 import { layer, logic, shadow, type Layer, type ShadowState } from './logic'
@@ -41,6 +42,7 @@ function drop(state: ShadowState, target: string) {
 <template>
   <ToolWorkspace :logic="logic">
     <template #controls="{ state, update }">
+      <SendStyleButton v-if="state.mode === 'box'" from="shadow" :value="shadow(state)" />
       <label>{{ key('mode') }}
         <select :value="state.mode" @change="update(d => { d.mode = value($event) as ShadowState['mode'] })">
           <option value="box">{{ key('box') }}</option><option value="text">{{ key('text') }}</option>

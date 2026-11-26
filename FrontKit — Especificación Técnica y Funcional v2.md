@@ -1048,3 +1048,151 @@ La Etapa 4 (PWA, auditoría, base extensible) sigue siendo el hito de la **v1.0*
 3. **Excepciones de presupuesto** (Faker, svgo) o generadores propios más ligeros.
 4. **«Analizar mi HTML»** del simulador: ¿en alcance de la Etapa 8 o aplazado?
 5. **Prefijos SMACSS** (`l-`, `is-`…): se dejan como opt-in; ¿quieres que sean el comportamiento por defecto?
+
+## 30. Ampliación II: siete herramientas adicionales
+
+Extiende las secciones 1–29 con siete herramientas más (catálogo total: **38**). Mantiene todas las reglas anteriores (privacidad, Workers, `ToolLogic`, DoD de las secciones 21 y 29.3). Donde hay conflicto, prevalece esta sección.
+
+### 30.1 Catálogo de la ampliación
+
+| id | Ruta | Categoría | Etapa | Móvil | Entrada persistida | Compartir enlace |
+| --- | --- | --- | --- | --- | --- | --- |
+| `color-converter` | `/tools/color-converter` | color-tokens | 9 | Completo | Sí | Sí |
+| `encoders` | `/tools/encoders` | data | 9 | Completo | ≤ 100 KB (salvo claves) | Solo opciones |
+| `css-reset` | `/tools/css-reset` | code | 9 | Completo | Sí | Sí |
+| `transitions` | `/tools/transitions` | animation | 10 | Usable | Sí | Sí |
+| `container-queries` | `/tools/container-queries` | layout | 10 | Usable | Sí | Sí |
+| `image-optimizer` | `/tools/image-optimizer` | assets | 11 | Usable | Solo opciones | No |
+| `a11y-audit` | `/tools/a11y-audit` | html | 11 | Tablet+ | ≤ 100 KB | No |
+
+### 30.2 Cambios transversales
+
+- **`ToolLogic.neverPersist: (keyof S)[]`:** campos que **jamás** se escriben en IndexedDB, enlaces ni backups, aunque la herramienta no sea `sensitive` (por ejemplo, la clave HMAC de `encoders`).
+- **Dependencias nuevas** (⚠️ verificar versión, licencia y tamaño): códecs WASM para imágenes (por ejemplo la familia `@jsquash/*`: JPEG, WebP, AVIF, PNG optimizado), `axe-core` (licencia MPL-2.0: se incluye en `/about` con su atribución y no se modifica).
+- **Presupuestos (ampliación de 16.4 y 23.3):** cada códec de `image-optimizer` se descarga **bajo demanda** al elegir el formato (≤ 1 MB gzip por códec, fuera del precache y con aviso de peso antes de la primera descarga); `axe-core` ≤ 200 KB gzip en chunk diferido. La PWA los excluye del precache (*runtime caching*).
+- **Reutilización:** `transitions` comparte el editor de Bézier/`linear()` con Animation; `color-converter` usa `lib/color`; `a11y-audit` reutiliza el *sandbox* y el protocolo de `postMessage` con nonce del Playground (sección 4.3–4.4); `css-reset` usa `lib/css-ast`.
+- **Privacidad:** ninguna de las siete hace peticiones de red; los enlaces a documentación externa se muestran como texto/enlace normal (no se precargan).
+
+### 30.3 Conversor y comprobador de color
+
+**Ruta:** `/tools/color-converter` · **Categoría:** `color-tokens` · **Etapa:** 9
+
+- **Entrada:** cualquier color CSS (HEX 3/4/6/8, `rgb()`, `hsl()`, `hwb()`, `lab()`, `lch()`, `oklab()`, `oklch()`, `color(display-p3 …)`, nombre) con alfa, más **cuentagotas** (`EyeDropper`, solo donde exista ⚠️).
+- **Equivalencias:** todos los formatos anteriores copiables con un clic, el **nombre CSS más cercano** y la **utilidad de la paleta por defecto de Tailwind más cercana** (por distancia en OKLab, con el escalón, p. ej. `blue-500`) ⚠️ verificar valores v4.
+- **Gamut:** indicador si el color queda fuera de sRGB (típico en OKLCH/P3), HEX **mapeado** reduciendo croma (algoritmo de *gamut mapping* de CSS Color 4) y aviso según `matchMedia('(color-gamut: p3)')`.
+- **Contraste:** frente a un segundo color, ratio **WCAG 2.1** y **APCA Lc** con insignias AA/AAA y botón «ajustar luminosidad hasta cumplir AA» (modifica L en OKLCH conservando H y C).
+- **`color-mix()`:** dos colores, porcentaje y espacio (`srgb`, `oklab`, `oklch`) con salida `color-mix(in oklch, A 40%, B)` y valor resuelto.
+- **Variaciones:** tintes/sombras y claros/oscuros en pasos de OKLCH.
+- **Modo lote:** se pega CSS y se **convierten todos los colores** al formato elegido (con `lib/css-ast`), con recuento y lista de los no convertibles.
+- **Integración:** enviar a Paleta, Gradiente y Tokens (*handoff*, sección 15).
+- **Tests:** ejemplos de referencia de CSS Color 4, ida y vuelta entre espacios (propiedad), mapeo de gamut, valores límite de alfa.
+
+### 30.4 Optimizador y conversor de imágenes
+
+**Ruta:** `/tools/image-optimizer` · **Categoría:** `assets` · **Etapa:** 11
+
+- **Entrada:** PNG, JPG, WebP, AVIF, hasta 30 imágenes y 100 MB en total (error por imagen > 50 megapíxeles); el SVG se deriva al optimizador SVG. Todo en local y en Worker con `createImageBitmap` y `OffscreenCanvas`.
+- **Estado:** `format` (`webp | avif | jpeg | png`), `quality` (por formato), `resize { width, height, lockAspect, fit, allowUpscale: false }`, `metadata` (`strip` por defecto; opción de conservar el perfil ICC), `responsive { enabled, widths: [320, 640, 960, 1280, 1920], formats }`, `placeholder` (`none | dominant | blurhash-like`).
+- **Codificación:** WebP/JPEG/PNG con `convertToBlob` cuando el navegador lo soporte; **AVIF y JPEG/PNG optimizados con códecs WASM** cargados bajo demanda. Se **aplica la orientación EXIF** y se elimina el resto de metadatos (GPS incluido) al recodificar; un aviso lo explica.
+- **Comparador antes/después** con divisor accesible, tamaños y % de ahorro; barra de progreso y cancelación por imagen.
+- **Conjunto responsivo:** genera una imagen por ancho (sin superar el original ni duplicar anchos) y formato, y el **ZIP** (`fflate`) con ellas.
+- **Salidas:** bloque `<picture>` con `<source type srcset sizes>` y `<img width height loading='lazy' decoding='async' alt>` (las dimensiones evitan saltos de maquetación), `sizes` editable con ayuda, clases Tailwind y marcador de posición (color dominante o miniatura de ≈ 20 px en *data URI*).
+- **Tests:** dimensiones exactas, sin ampliación, anchos únicos, salida decodificable, ausencia de EXIF (comprobación de marcadores), HTML `<picture>` válido, límite de megapíxeles.
+
+### 30.5 Codificadores y utilidades de texto
+
+**Ruta:** `/tools/encoders` · **Categoría:** `data` · **Etapa:** 9 · `neverPersist: ['hmacKey', 'hashInput']`
+
+Pestañas independientes, todo local:
+
+- **Base64:** texto ↔ Base64 / Base64URL (seguro con UTF-8), archivo → *data URI* con vista previa de imagen; detección de entrada inválida.
+- **URL:** `encodeURIComponent` frente a `encodeURI` y codificación de formulario (`+` por espacio), con explicación de la diferencia.
+- **Entidades HTML:** escapado mínimo o completo, entidades con nombre o numéricas, y decodificación.
+- **Hash:** SHA-1/256/384/512 con WebCrypto sobre texto o archivo (hasta 100 MB), **HMAC** con clave; MD5 solo como opción marcada «inseguro, solo para sumas de comprobación» ⚠️ (librería aparte).
+- **UUID/ULID:** v4, v7 y ULID, en lote.
+- **Timestamp Unix:** segundos/milisegundos ↔ ISO, local y UTC, selector de zona horaria, tiempo relativo y reloj «ahora»; detección automática de 10 u 13 dígitos.
+- **Regex (sabor JavaScript):** patrón, banderas, texto de prueba, coincidencias resaltadas, grupos y nombrados, vista previa de sustitución y lista de *tokens* explicada. Se ejecuta en **Worker con tiempo límite (≈ 500 ms) y `terminate()`** para evitar el *backtracking* catastrófico, con aviso.
+- **Escapes:** cadenas JSON y secuencias Unicode.
+- **Tests:** vectores conocidos de cada hash y HMAC, Base64URL sin relleno, UUID v7 monótono, regex con patrón patológico (corta sin bloquear), huso horario y cambio de hora.
+
+### 30.6 Transiciones, *scroll snap* y animaciones por scroll
+
+**Ruta:** `/tools/transitions` · **Categoría:** `animation` · **Etapa:** 10
+
+- **Transiciones:** lista de propiedades (`opacity`, `transform`, `background-color`…), cada una con duración, retardo y *timing* (preajustes, `cubic-bezier`, `steps`, `linear()` con el editor compartido), `transition-behavior: allow-discrete` y disparador del preview (hover, foco, clic o cambio de clase). Salida CSS y Tailwind (`transition-[opacity,transform] duration-200 ease-[…]`) con la variante `motion-reduce`.
+- **Scroll snap:** `scroll-snap-type` (eje y `mandatory | proximity`), `scroll-snap-align`, `scroll-snap-stop`, `scroll-padding`, `scroll-margin`; preview de carrusel con N elementos y *gap*. Salida CSS y Tailwind (`snap-x snap-mandatory`, `snap-start`, `scroll-pl-*`), con nota de accesibilidad (foco por teclado y controles no dependientes del gesto).
+- **Animaciones por scroll:** `animation-timeline: scroll()` y `view()`, `animation-range`, con preajustes (barra de progreso de lectura, aparición al entrar en vista, parallax suave). Detección con `CSS.supports('animation-timeline: scroll()')` ⚠️; la salida incluye siempre `@supports` y un **respaldo** sin animación, y la variante `prefers-reduced-motion`. Entrada desde Animation («usar este `@keyframes`»).
+- **Tests:** serialización de listas de transición, orden de propiedades, `@supports` presente, valores de `animation-range`, compilación Tailwind real (sección 18.2).
+
+### 30.7 Generador de Container Queries y `@scope`
+
+**Ruta:** `/tools/container-queries` · **Categoría:** `layout` · **Etapa:** 10
+
+- **Pestaña Container Queries:**
+  - Estado: `container { name, type: 'inline-size' | 'size' | 'normal' }` (con la forma abreviada `container: nombre / tipo`), `rules[]` (condición `min-width`/`max-width`/rango, y estilos aplicados a elementos hijos) y `previewWidth`.
+  - **Contenedor redimensionable** por arrastre y por teclado (flechas ±10 px, Shift ±50 px) que muestra qué reglas `@container` están activas en cada momento, con insignias de las condiciones cumplidas.
+  - **Unidades de contenedor** `cqw`, `cqh`, `cqi`, `cqb`, `cqmin`, `cqmax` con calculadora que muestra su valor en px para el ancho actual.
+  - Plantillas: tarjeta que cambia de columna a fila, barra lateral adaptable, rejilla automática, componente de navegación.
+  - Consultas de estilo (`@container style(--x: y)`) como opción **experimental** marcada con aviso de compatibilidad ⚠️.
+  - Salidas: CSS y **Tailwind v4** (`@container`, `@container/nombre`, variantes `@sm:`, `@md:`, `@md/nombre:` y `@min-[…]:`) ⚠️ verificar nombres en la versión fijada.
+- **Pestaña `@scope`:**
+  - Estado: `root` (selector), `limit` (límite inferior, «agujero de rosquilla»), `rules[]` y HTML de muestra editable.
+  - El preview **resalta los elementos afectados** por cada regla, muestra la **proximidad** que decide el conflicto entre dos ámbitos y usa `:scope`.
+  - Panel explicativo breve frente a CSS Nesting y selectores descendientes.
+  - Detección de soporte con `CSS.supports` y salida con respaldo cuando proceda ⚠️.
+- **Tests:** serialización de `@container` con nombre/sin nombre y rangos, conversión de unidades `cq*`, plantillas válidas en `css-tree`, equivalencia de clases Tailwind mediante compilación real.
+
+### 30.8 Generador de CSS Reset a medida
+
+**Ruta:** `/tools/css-reset` · **Categoría:** `code` · **Etapa:** 9
+
+- **Estado:** `base` (`modern | minimal | opinionated | preflight-complement`), `rules[]` (cada una con `enabled`), `layer` (`reset` o sin capa), `minify`, `comments`.
+- **Reglas propias, no copiadas:** el catálogo se redacta desde cero (inspirado en prácticas habituales, sin reproducir *resets* de terceros) para evitar problemas de licencia. Cada regla tiene `id`, selector, declaraciones, **explicación** (i18n), **nivel de riesgo** (`seguro | con criterio | experimental`) y categoría. Ejemplos del catálogo:
+  - `box-sizing: border-box` universal y reseteo de márgenes.
+  - `text-size-adjust` en `html`; `line-height` base y `min-height: 100dvh` en `body`.
+  - Medios (`img`, `picture`, `video`, `canvas`, `svg`) como bloque con `max-width: 100%`.
+  - Controles de formulario con `font: inherit`; `textarea` con `resize: vertical`.
+  - `text-wrap: balance` en títulos y `pretty` en párrafos; `overflow-wrap` seguro.
+  - `:focus-visible` con contorno visible por defecto; `[hidden]` efectivo.
+  - `prefers-reduced-motion` (animaciones y `scroll-behavior`), `scroll-behavior: smooth` solo con `no-preference`.
+  - `color-scheme`, `interpolate-size: allow-keywords` (experimental ⚠️), `isolation: isolate` en el contenedor raíz.
+- **Aviso Tailwind:** Tailwind v4 ya incluye *Preflight*; el preset `preflight-complement` genera **solo lo que Preflight no cubre** para evitar duplicados.
+- **Preview:** página de muestra con y sin reset lado a lado y recuento de reglas activas; edición de reglas con la herramienta de nombres y comentarios.
+- **Salidas:** `reset.css` (con `@layer reset { … }`), versión minificada y bloque `@layer base { … }` para Tailwind. Integración con Tokens (`color-scheme`, fuentes base).
+- **Tests:** la salida se parsea sin errores con `css-tree`, el envoltorio de capa es correcto, no hay declaraciones duplicadas, la versión minificada es equivalente a la normal.
+
+### 30.9 Auditor de accesibilidad de HTML pegado
+
+**Ruta:** `/tools/a11y-audit` · **Categoría:** `html` · **Etapa:** 11 · **Uso:** tablet o escritorio
+
+- **Entrada:** fragmento o documento HTML (≤ 500 KB) y CSS opcional. Por defecto se **eliminan los `<script>` del usuario**; ejecutar sus scripts es una opción explícita y desactivada.
+- **Ejecución aislada:** `axe-core` (chunk diferido, ⚠️ verificar licencia MPL-2.0 y tamaño) se inyecta en un iframe `sandbox='allow-scripts'` **sin `allow-same-origin`**. El informe vuelve por `postMessage` validando `event.source` y un nonce (mismo protocolo que el Playground, sección 4.4). Sin peticiones de red.
+- **Configuración:** conjuntos de reglas (`wcag2a`, `wcag2aa`, `wcag21aa`, `wcag22aa`, `best-practice`), ancho del viewport, esquema claro/oscuro (afecta al contraste) y *locale* de axe en español ⚠️.
+- **Resultados:**
+  - Agrupados por impacto (crítico, grave, moderado, leve) con regla, descripción, **cómo corregir** y enlace a la documentación.
+  - Elementos afectados con fragmento de código y **resaltado en el preview**; búsqueda aproximada de la línea en la entrada (aproximada, porque axe devuelve selectores).
+  - Recuento de reglas superadas, **«a revisar manualmente»** (*incomplete*) y no aplicables; **no hay «puntuación» inventada**.
+  - Lista breve de comprobaciones manuales que axe no cubre (orden de foco, uso solo con teclado, textos alternativos con sentido).
+- **Exportar:** informe en JSON, Markdown y HTML.
+- **Integración:** botón «Auditar» en las salidas HTML de Table Builder, Layout y Meta Tags, que envía el código mediante *handoff*.
+- **Tests:** *fixtures* con infracciones conocidas (falta de `alt`, contraste bajo, etiqueta de formulario ausente, encabezados desordenados) que deben producir los identificadores de regla esperados; e2e de aislamiento (un script del usuario **no** puede leer IndexedDB ni el DOM de la app) y de red vacía.
+
+### 30.10 Hoja de ruta, calidad y riesgos de la Ampliación II
+
+| Etapa | Contenido | Criterio de salida |
+| --- | --- | --- |
+| 9 — Utilidades diarias | `color-converter`, `encoders`, `css-reset` | Vectores de referencia correctos; regex con tiempo límite verificado; `neverPersist` comprobado en e2e |
+| 10 — Movimiento y layout moderno | `transitions`, `container-queries` | Salida Tailwind compilada de verdad; avisos de compatibilidad con `CSS.supports` |
+| 11 — Imágenes y auditoría | `image-optimizer`, `a11y-audit` | Códecs bajo demanda con aviso de peso; aislamiento del auditor verificado; chunks fuera del precache |
+
+- **DoD:** se aplican las secciones 21 y 29.3, más: pestañas o modos independientes con estado propio, y **degradación controlada** cuando una API del navegador no exista (`EyeDropper`, `animation-timeline`, AVIF).
+- **Pruebas específicas:** comparación de resultados de color con una implementación de referencia, fuzzing ligero de la gramática de `color-mix`/`color()`, *fixtures* de imágenes con orientación EXIF y perfiles ICC, y *golden files* del informe de axe.
+
+| Riesgo | Mitigación |
+| --- | --- |
+| Peso de los códecs WASM y de `axe-core` | Carga bajo demanda con aviso, fuera del precache, presupuestos documentados |
+| Compatibilidad desigual de `@scope`, `animation-timeline`, `style()` y AVIF | Detección con `CSS.supports`/capacidades del navegador, salida con respaldo y avisos |
+| MD5 y hashes débiles pueden inducir a error | Etiquetado «inseguro», explicación visible y SHA-256 como opción por defecto |
+| Regex catastrófica bloquea la pestaña | Worker con límite de tiempo y `terminate()` |
+| Licencia de `axe-core` (MPL-2.0) y de los códecs | Revisión en el spike de la Etapa 11; atribución en `/about`; sin modificar el código fuente de terceros |
+| El catálogo (38 herramientas) crece más que la capacidad de mantenerlo | Etapas incrementales, `pnpm new:tool`, librerías compartidas y DoD estricto |

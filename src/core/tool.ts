@@ -15,6 +15,8 @@ export interface ToolLogic<S> {
   defaultState: () => S
   schema: GenericSchema<S>
   migrate: (raw: unknown, fromVersion: number) => S
+  transient?: (keyof S)[]
+  shareExclude?: (keyof S)[]
   outputs: Record<string, (state: S) => string>
   presets: Preset<S>[]
   random?: () => S

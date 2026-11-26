@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import CodeEditor from './CodeEditor.vue'
 import { ChevronDown, Columns2, LayoutGrid, PanelLeft, PanelRight, Rows2, PanelsTopLeft, Terminal } from 'lucide-vue-next'
-import { computed, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { decodeShare, encodeShare } from '../../composables/share'
@@ -11,7 +11,7 @@ import { download } from '../../lib/download'
 import { useSettingsStore } from '../../stores/settings'
 import { useNotificationsStore } from '../../stores/notifications'
 import { createProject, exportHtml, importProject, languages, layouts, logic, parseProject, sourceOnly, templates, type Project, type Source } from './project'
-import { levels, previewDocument, type Level } from './preview'
+import { consoleScript, levels, previewDocument, type Level } from './preview'
 
 const { t } = useI18n()
 const label = (key: string) => t('detail.playground.' + key)
@@ -27,6 +27,9 @@ const template = ref('card')
 const folded = ref({ html: false, css: false, js: false })
 const layoutIcons = { quad: LayoutGrid, side: PanelRight, left: PanelLeft, columns: Rows2, bottom: PanelsTopLeft, tabs: Columns2 }
 const consoleOpen = ref(true)
+const consoleReady = ref(false)
+const command = ref('')
+const consoleOutput = ref<HTMLOListElement>()
 const errors = computed(() => logs.value.filter(row => row.level === 'error'))
 const warnings = computed(() => logs.value.filter(row => row.level === 'warn'))
 const preview = ref<HTMLIFrameElement>()
@@ -38,10 +41,16 @@ const large = ref(false)
 const dirty = ref(false)
 const ratio = ref(52)
 const area = ref<HTMLElement>()
+const editorRow = ref<HTMLElement>()
+const editorWidths = ref([100 / 3, 100 / 3, 100 / 3])
+const quadWidths = ref([50, 50])
+const horizontalEditors = computed(() => layout.value === 'columns' || layout.value === 'bottom')
+const panelWidths = computed(() => layout.value === 'quad' ? quadWidths.value : editorWidths.value)
+let editorDrag: { origin: number; width: number; left: number; total: number } | undefined
 const result = ref('')
 const filter = ref('')
 const search = ref('')
-const logs = shallowRef<{level: Level; text: string; id: number}[]>([])
+const logs = shallowRef<{level: Level | 'command'; text: string; id: number}[]>([])
 const shown = computed(() => logs.value.filter(row => (!filter.value || row.level === filter.value) && row.text.toLowerCase().includes(search.value.toLowerCase())))
 const small = ref(false)
 const layout = computed(() => small.value ? 'tabs' : project.value.layout)
@@ -101,6 +110,7 @@ function edit(patch: Partial<Source>) {
 function clearPreview() {
   clearTimeout(runTimer)
   runVersion++
+  consoleReady.value = false
   nonce = ''
   previewHtml.value = ''
   logs.value = []
@@ -180,6 +190,7 @@ async function run() {
   try { await write('meta', flag, true) } catch { return }
   if (disposed || revision !== runVersion) return
   logs.value = []
+  consoleReady.value = false
   nonce = token
   result.value = doc.parsed ? '' : label('parse')
   previewHtml.value = doc.html
@@ -195,10 +206,56 @@ watch([ready, blocked, shared, () => project.value.id, () => project.value.html,
 function receive(event: MessageEvent) {
   const msg = event.data
   if (!nonce || event.source !== preview.value?.contentWindow || !msg || msg.nonce !== nonce || typeof msg.text !== 'string') return
-  if (msg.level === 'ready') { void remove('meta', flag).catch(() => {}); return }
+  if (msg.level === 'ready') {
+    consoleReady.value = true
+    void remove('meta', flag).catch(() => {})
+    return
+  }
   if (!levels.includes(msg.level)) return
   if (msg.level === 'clear') { logs.value = []; return }
-  logs.value = [...logs.value.slice(-999), { id: ++seq, level: msg.level, text: msg.text.slice(0,4000) }]
+  appendLog(msg.level, msg.text)
+}
+function appendLog(level: Level | 'command', text: string) {
+  logs.value = [...logs.value.slice(-999), { id: ++seq, level, text: text.slice(0, 4000) }]
+  void nextTick(() => {
+    if (consoleOutput.value) consoleOutput.value.scrollTop = consoleOutput.value.scrollHeight
+  })
+}
+function executeCommand() {
+  const source = command.value.trim()
+  const frame = preview.value?.contentWindow
+  if (!source || !consoleReady.value || !frame) return
+  appendLog('command', source)
+  command.value = ''
+  try {
+    const script = consoleScript(source, nonce, store.data.editor.loopProtection)
+    frame.postMessage({ nonce, command: script }, '*')
+  } catch (error) {
+    appendLog('error', error instanceof Error ? error.message : String(error))
+  }
+}
+function splitEditors(index: number, left: number, total: number) {
+  const width = Math.min(total - 12, Math.max(12, left))
+  panelWidths.value[index] = width
+  panelWidths.value[index + 1] = total - width
+}
+function startEditorDrag(event: PointerEvent, index: number) {
+  const target = event.currentTarget as HTMLElement
+  const width = (layout.value === 'quad' ? area.value : editorRow.value)?.clientWidth
+  if (event.button !== 0 || !width) return
+  const left = panelWidths.value[index]
+  editorDrag = { origin: event.clientX, width, left, total: left + panelWidths.value[index + 1] }
+  target.setPointerCapture(event.pointerId)
+}
+function moveEditorDrag(event: PointerEvent, index: number) {
+  const target = event.currentTarget as HTMLElement
+  if (!editorDrag || !target.hasPointerCapture(event.pointerId)) return
+  const { origin, width, left, total } = editorDrag
+  splitEditors(index, left + (event.clientX - origin) * 100 / width, total)
+}
+function nudgeEditors(index: number, delta: number) {
+  const left = panelWidths.value[index]
+  splitEditors(index, left + delta, left + panelWidths.value[index + 1])
 }
 function resize(event: PointerEvent) {
   const target = event.currentTarget as HTMLElement
@@ -298,14 +355,22 @@ onUnmounted(() => {
       <div v-if="layout === 'tabs'" class="actions language-tabs">
         <button v-for="lang in languages" :key="lang" class="btn" type="button" :aria-pressed="active === lang" @click="active = lang">{{ lang.toUpperCase() }}</button>
       </div>
-      <div ref="area" class="play-area" :class="['play-' + layout, { 'active-folded':folded[active], 'first-folded':folded.html && folded.css, 'all-folded':languages.every(lang => folded[lang]) }]" :style="{'--split':ratio+'%'}">
-        <div class="editors">
-          <section v-for="lang in languages" v-show="layout !== 'tabs' || active === lang" :key="lang" class="code-pane" :class="{'is-folded':folded[lang]}" @focusin="active = lang">
+      <div ref="area" class="play-area" :class="['play-' + layout, { 'active-folded':folded[active], 'first-folded':folded.html && folded.css, 'all-folded':languages.every(lang => folded[lang]) }]" :style="{'--split':ratio+'%', '--editor-widths':panelWidths.map(width => width + 'fr').join(' 10px ')}">
+        <div ref="editorRow" class="editors">
+          <template v-for="(lang, index) in languages" :key="lang">
+          <section v-show="layout !== 'tabs' || active === lang" class="code-pane" :data-language="lang" :class="{'is-folded':folded[lang]}" @focusin="active = lang">
             <button type="button" class="pane-heading" :aria-expanded="!folded[lang]" :aria-controls="'source-'+lang" :aria-label="label(folded[lang] ? 'expand' : 'fold') + ' ' + lang.toUpperCase()" @click="folded[lang] = !folded[lang]">
               <span class="language-dot" :class="'dot-'+lang" />{{ lang.toUpperCase() }}<ChevronDown :size="16" />
             </button>
             <CodeEditor v-show="!folded[lang]" :id="'source-'+lang" :language="lang" :value="project[lang]" :wrap="store.data.editor.wordWrap" :font-size="store.data.editor.fontSize" :tab-size="store.data.editor.tabSize" @change="edit({[lang]:$event})" />
           </section>
+          <div v-if="(horizontalEditors && index < 2) || (layout === 'quad' && index === 0)"
+            class="divider editor-divider" role="separator" tabindex="0" aria-orientation="vertical"
+            :aria-label="t('detail.playground.resizeEditors', { left: lang.toUpperCase(), right: languages[index + 1].toUpperCase() })"
+            :aria-valuemin="12" :aria-valuemax="Math.round(panelWidths[index] + panelWidths[index + 1] - 12)" :aria-valuenow="Math.round(panelWidths[index])"
+            @pointerdown="startEditorDrag($event, index)" @pointermove="moveEditorDrag($event, index)"
+            @lostpointercapture="editorDrag = undefined" @keydown.left.prevent="nudgeEditors(index, -3)" @keydown.right.prevent="nudgeEditors(index, 3)" />
+          </template>
         </div>
         <div v-if="layout === 'side' || layout === 'left'" class="divider" role="separator" tabindex="0" aria-orientation="vertical" :aria-label="label('split')" aria-valuemin="25" aria-valuemax="75" :aria-valuenow="ratio"
           @pointerdown="($event.currentTarget as HTMLElement).setPointerCapture($event.pointerId)" @pointermove="resize"
@@ -320,7 +385,11 @@ onUnmounted(() => {
         <div class="actions project-actions"><label>{{ label('level') }}<select v-model="filter"><option value="">{{ t('app.all') }}</option><option v-for="level in levels.filter(l => l !== 'clear')" :key="level">{{ level }}</option></select></label>
           <input v-model="search" type="search" :placeholder="label('search')" :aria-label="label('search')" />
           <button class="btn" type="button" @click="logs = []">{{ label('clear') }}</button></div>
-        <ol class="console-output"><li v-for="row in shown" :key="row.id"><strong :class="'log-' + row.level">{{ row.level }}</strong> {{ row.text }}</li></ol>
+        <ol ref="consoleOutput" class="console-output"><li v-for="row in shown" :key="row.id"><strong :class="'log-' + row.level">{{ row.level === 'command' ? '›' : row.level }}</strong> {{ row.text }}</li></ol>
+        <form class="console-command" @submit.prevent="executeCommand">
+          <input v-model="command" type="text" :aria-label="label('command')" :placeholder="label('command')" autocomplete="off" spellcheck="false" maxlength="8000" />
+          <button class="btn" type="submit" :disabled="!consoleReady || !command.trim()">{{ label('executeCommand') }}</button>
+        </form>
         <span class="sr-only" aria-live="polite">{{ errors.at(-1)?.text }}</span>
         </div>
       </section>
@@ -348,7 +417,12 @@ onUnmounted(() => {
 .dot-html { background:#f7aa82; }.dot-css { background:#91baff; }.dot-js { background:#eed76b; }
 .result { background:white; }.result h3 { background:#e1eee2;color:#244a35; }
 .result iframe { flex:1;min-height:0;width:100%;border:0;background:white; }
-.play-quad { grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:1fr 1fr; }
+.play-quad { grid-template-columns:var(--editor-widths);grid-template-rows:1fr 1fr;column-gap:0; }
+.play-quad [data-language=html] { grid-area:1 / 1; }
+.play-quad [data-language=css] { grid-area:1 / 3; }
+.play-quad [data-language=js] { grid-area:2 / 1; }
+.play-quad .editor-divider { grid-area:1 / 2 / 3; }
+.play-quad .result { grid-area:2 / 3; }
 .play-quad.first-folded { grid-template-rows:auto 1fr; }
 .play-quad .editors { display:contents; }
 .play-quad .code-pane.is-folded { align-self:start;width:100%; }
@@ -360,12 +434,17 @@ onUnmounted(() => {
 .divider { cursor:ew-resize;touch-action:none;background:linear-gradient(to right,transparent 4px,#96a99a 4px 7px,transparent 7px); }
 .play-columns,.play-bottom,.play-tabs { grid-template-rows:1fr 1fr; }
 .play-columns.all-folded { grid-template-rows:auto 1fr; }.play-bottom.all-folded { grid-template-rows:1fr auto; }
-.play-bottom .result { order:-1; }.play-columns .is-folded,.play-bottom .is-folded { flex:0 1 6rem;align-self:start; }
+.play-bottom .result { order:-1; }
+.play-columns .editors,.play-bottom .editors { display:grid;grid-template-columns:var(--editor-widths);gap:0; }
+.play-columns .is-folded,.play-bottom .is-folded { align-self:start; }
+.editor-divider:focus-visible { outline:2px solid #dbe7e1;outline-offset:-2px; }
 .play-tabs.active-folded { grid-template-rows:auto 1fr; }
 .console-pane { min-width:0;border:1px solid var(--line);border-radius:10px;padding:.25rem .65rem;background:var(--surface); }
 .console-title { width:100%;padding-inline:0; }
 .console-title small { font-weight:400;color:var(--muted); }
 .console-output { min-height:2rem;max-height:12rem;overflow:auto;font:.85rem/1.55 ui-monospace,monospace;overflow-wrap:anywhere;white-space:pre-wrap; }
+.console-command { display:flex;gap:.5rem;padding:.5rem 0; }
+.console-command input { flex:1;min-width:0;font-family:ui-monospace,monospace; }
 .console-output strong { color:var(--accent); }.console-output .log-error { color:var(--danger); }
 @media(max-width:700px){.play-area{height:60dvh;min-height:370px}.studio-toolbar .actions{gap:.25rem}}
 </style>

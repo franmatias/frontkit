@@ -15,7 +15,7 @@ const notifications = useNotificationsStore()
 const candidate = shallowRef<Snapshot>()
 const storage = ref<StorageEstimate>()
 const editorFlags = ['wordWrap', 'minimap', 'loopProtection'] as const
-const prefsFlags = ['autoCopyOnClick', 'showTailwindByDefault'] as const
+const prefsFlags = ['rememberInput', 'autoCopyOnClick', 'showTailwindByDefault'] as const
 const editorNumbers = [
   { id: 'fontSize', min: 10, max: 32, step: 1 },
   { id: 'tabSize', min: 1, max: 8, step: 1 },

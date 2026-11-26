@@ -6,7 +6,7 @@ import { useClipboard } from '../../composables/useClipboard'
 import { useToolState } from '../../composables/useToolState'
 import { findTool } from '../../core/registry'
 import { onExternalChange, remove, snapshot, write } from '../../core/storage/db'
-import type { Preset, ToolLogic } from '../../core/tool'
+import { projectToolState, type Preset, type ToolLogic } from '../../core/tool'
 import { download } from '../../lib/download'
 import { useNotificationsStore } from '../../stores/notifications'
 import { useToolsStore } from '../../stores/tools'
@@ -62,7 +62,7 @@ async function savePreset() {
   const editing = personal.value.find(item => item.id === renameId.value)
   try {
     await write('userPresets', id + ':' + (editing?.id ?? crypto.randomUUID()),
-      { name: label, state: editing?.state ?? state.value }, props.logic.schemaVersion)
+      { name: label, state: projectToolState(props.logic, editing?.state ?? state.value, 'store') }, props.logic.schemaVersion)
     name.value = ''
     renameId.value = ''
     await refreshPresets()
@@ -160,7 +160,7 @@ onUnmounted(() => {
             <slot name="preview" :state="state" :update="update" />
           </div>
         </section>
-        <CodeOutputPanel ref="output" :outputs="outputs" :name="id" />
+        <CodeOutputPanel v-if="Object.keys(outputs).length" ref="output" :outputs="outputs" :name="id" />
       </div>
     </div>
   </div>

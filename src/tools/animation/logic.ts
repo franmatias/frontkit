@@ -12,16 +12,17 @@ const frame = v.strictObject({
   rotate: numberBetween(-360, 360), scale: numberBetween(0, 4), opacity: numberBetween(0, 100),
   color: v.union([hexColor, v.literal('')]), radius: numberBetween(0, 100),
 })
-const schema = v.strictObject({
-  name: v.pipe(v.string(), v.regex(/^[a-z][a-z0-9-]{0,31}$/)), duration: numberBetween(50, 10000), delay: numberBetween(-3000, 5000),
-  iterations: v.pipe(numberBetween(0, 30), v.integer()), direction: v.picklist(directions), fillMode: v.picklist(fills),
-  playState: v.picklist(['running', 'paused']), reduce: v.boolean(),
-  timing: v.strictObject({
+export const timingSchema = v.strictObject({
     kind: v.picklist(['preset', 'bezier', 'steps', 'linear']), preset: v.picklist(presets), jump: v.picklist(jumps),
     steps: numberBetween(1, 24), x1: numberBetween(0, 1), y1: numberBetween(-.5, 1.5),
     x2: numberBetween(0, 1), y2: numberBetween(-.5, 1.5),
     mass: numberBetween(.2, 4), stiffness: numberBetween(15, 300), damping: numberBetween(1, 45),
-  }),
+  })
+const schema = v.strictObject({
+  name: v.pipe(v.string(), v.regex(/^[a-z][a-z0-9-]{0,31}$/)), duration: numberBetween(50, 10000), delay: numberBetween(-3000, 5000),
+  iterations: v.pipe(numberBetween(0, 30), v.integer()), direction: v.picklist(directions), fillMode: v.picklist(fills),
+  playState: v.picklist(['running', 'paused']), reduce: v.boolean(),
+  timing: timingSchema,
   keyframes: v.pipe(v.array(frame), v.minLength(2), v.maxLength(24), v.check(items => new Set(items.map(item => item.id)).size === items.length)),
 })
 export type Frame = v.InferOutput<typeof frame>
@@ -55,7 +56,7 @@ export function spring(timing: State['timing']) {
   stops[stops.length - 1] = 1
   return stops
 }
-export function timingFunction(state: State) {
+export function timingFunction(state: Pick<State, 'timing'>) {
   const t = state.timing
   if (t.kind === 'preset') return t.preset
   if (t.kind === 'bezier') return 'cubic-bezier(' + [t.x1, t.y1, t.x2, t.y2].join(', ') + ')'
@@ -66,7 +67,7 @@ export function frameStyle(frame: Frame) {
   return { transform: 'translate(' + frame.translateX + 'px, ' + frame.translateY + 'px) rotate(' + frame.rotate + 'deg) scale(' + frame.scale + ')',
     opacity: String(frame.opacity / 100), borderRadius: frame.radius + 'px', ...(frame.color ? { backgroundColor: frame.color } : {}) }
 }
-function keyframes(state: State) {
+export function keyframes(state: State) {
   const rules = sorted(state).map(frame => {
     const css = frameStyle(frame)
     return '  ' + frame.percentage + '% { transform: ' + css.transform + '; opacity: ' + css.opacity +

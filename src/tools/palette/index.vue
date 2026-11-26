@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ArrowLeft, ArrowRight, Copy, Lock, Unlock } from 'lucide-vue-next'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import RangeField from '../../components/shared/RangeField.vue'
 import ToolWorkspace from '../../components/shared/ToolWorkspace.vue'
 import { useClipboard } from '../../composables/useClipboard'
-import { sendPalette } from '../../core/storage/palette-handoff'
+import { receivePalette, sendPalette } from '../../core/storage/palette-handoff'
 import { wcagContrast } from '../../lib/color'
 import { apca, simulateVision, visionModes } from '../../lib/color/vision'
 import { useNotificationsStore } from '../../stores/notifications'
@@ -14,6 +14,24 @@ import { channels, colorOf, harmonies, logic, outputColor, regenerate, shuffleCo
 
 const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
+const incoming = ref<Awaited<ReturnType<typeof receivePalette>>>()
+watch(() => route.query.handoff, async (id, _, cleanup) => {
+  let active = true
+  cleanup(() => { active = false })
+  incoming.value = undefined
+  const result = await receivePalette('palette', id).catch(() => undefined)
+  if (active) incoming.value = result
+}, { immediate: true })
+function importColors(state: PaletteState) {
+  if (!incoming.value) return
+  state.swatches = incoming.value.map((item, index) => ({
+    ...state.swatches[Math.min(index, state.swatches.length - 1)], ...item, id: crypto.randomUUID(),
+  }))
+  const query = { ...route.query }
+  delete query.handoff
+  void router.replace({ query })
+}
 const copy = useClipboard()
 const notifications = useNotificationsStore()
 const label = (key: string) => t('detail.palette.' + key)
@@ -89,6 +107,7 @@ async function send(state: PaletteState, to: 'gradient' | 'tokens') {
 <template>
   <ToolWorkspace :logic="logic">
     <template #controls="{ state, update }">
+      <button v-if="incoming" type="button" class="btn" @click="update(importColors)">Importar colores del conversor</button>
       <div class="field-grid">
         <label>{{ label('mode') }}
           <select :value="state.mode" @change="update(d => updateGeneration(d, { mode: value($event) === 'scale' ? 'scale' : 'harmony' }))">

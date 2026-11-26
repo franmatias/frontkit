@@ -17,12 +17,23 @@ FrontKit es una suite de herramientas front-end que se ejecuta en el navegador. 
 | Filtros CSS | `/tools/filter` | Beta |
 | Animaciones CSS | `/tools/animation` | Beta |
 | Minificador CSS | `/tools/css-minifier` | Beta |
+| Convertidor CSS | `/tools/css-converter` | Beta |
+| Convertidor BEM | `/tools/bem` | Beta |
+| Organizador SMACSS | `/tools/smacss` | Beta |
+| Simulador de sticky y apilamiento | `/tools/stacking` | Beta |
+| Conversor de color | `/tools/color-converter` | Beta |
+| Generador de CSS Reset | `/tools/css-reset` | Beta |
+| Codificadores de texto | `/tools/encoders` | Beta |
+| Transiciones y animaciones por scroll | `/tools/transitions` | Beta |
+| Container Queries y @scope | `/tools/container-queries` | Beta |
+| Optimizador de imágenes | `/tools/image-optimizer` | Beta |
+| Auditor de accesibilidad HTML | `/tools/a11y-audit` | Beta |
 
-Los generadores beta ofrecen vista previa, CSS y Tailwind, favoritos, presets y enlaces compartidos. `Ctrl/Cmd+K` abre la búsqueda global.
+Los generadores beta ofrecen vista previa, CSS y Tailwind, favoritos, presets y enlaces compartidos. `Ctrl/Cmd+K` abre la búsqueda global. La imagen y el título de cada ficha abren su herramienta. El menú lateral muestra las categorías plegadas al inicio.
 
 El Playground actualiza la vista previa al editar HTML, CSS o JavaScript, permite cambiar la disposición, plegar los paneles y ajustar el ancho de los editores vecinos, evaluar JavaScript en la consola, guardar proyectos locales y exportar HTML o JSON. El editor incluye resaltado, números de línea y sugerencias de autocompletado para HTML, CSS, JavaScript y Emmet. Pulsa Tab para expandir abreviaturas Emmet en HTML y CSS. La integración de Monaco y sus workers sigue pendiente.
 
-La etapa 5 incluye [JSON](./src/tools/json), el decodificador de JWT y URL, datos de prueba reproducibles, Lorem Ipsum con limpieza de texto, legibilidad, valores fluidos con `clamp()` y escalas tipográficas. Las etapas 6 a 11 aparecen como TODO.
+La etapa 5 incluye [JSON](./src/tools/json), el decodificador de JWT y URL, datos de prueba reproducibles, Lorem Ipsum con limpieza de texto, legibilidad, valores fluidos con `clamp()` y escalas tipográficas. El catálogo muestra el estado de cada herramienta.
 
 ## Desarrollo
 
@@ -59,6 +70,6 @@ Licencia [MIT](LICENSE). Consulta [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.
 
 ## Modo sin conexión
 
-La versión de producción instala una caché local para abrir el catálogo y las herramientas desde su ruta. Emmet y los workers se guardan la primera vez que se usan. Cuando hay una nueva versión, FrontKit muestra la opción Actualizar.
+La versión de producción instala una caché local para abrir el catálogo y las herramientas desde su ruta. Emmet, los workers, los códecs de imagen y el motor de auditoría se guardan la primera vez que se usan. Cuando hay una nueva versión, FrontKit muestra la opción Actualizar.
 
 El minificador usa PostCSS en un worker y conserva las cadenas, las consultas y el orden de las capas. La opción de reestructuración elimina declaraciones idénticas consecutivas.

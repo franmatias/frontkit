@@ -1,7 +1,7 @@
 import lzString from 'lz-string'
 import * as v from 'valibot'
 import { safeJson } from '../core/storage/backup'
-import type { ToolLogic } from '../core/tool'
+import { projectToolState, type ToolLogic } from '../core/tool'
 
 const payload = v.strictObject({
   v: v.pipe(v.number(), v.integer(), v.minValue(1)),
@@ -12,8 +12,7 @@ const payload = v.strictObject({
 export const shareLimit = 8000
 
 export function encodeShare<S>(tool: ToolLogic<S>, state: S) {
-  const shared = tool.shareExclude?.length ? { ...state } : state
-  for (const key of tool.shareExclude ?? []) delete shared[key]
+  const shared = projectToolState(tool, state, 'share')
   const encoded = lzString.compressToEncodedURIComponent(JSON.stringify({ v: tool.schemaVersion, t: tool.id, s: shared }))
   if (encoded.length > shareLimit) throw new Error('Share limit')
   return '#s=' + encoded

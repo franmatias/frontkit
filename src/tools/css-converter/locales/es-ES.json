@@ -1,0 +1,15 @@
+{
+  "source": "CSS de entrada",
+  "format": "Formato de salida",
+  "strategy": "Estrategia BEM",
+  "depth": "Profundidad máxima",
+  "unknown": "Propiedades sin equivalencia",
+  "themeVariants": "Usar variantes del tema cuando se pueda",
+  "specificity": "Conservar especificidad",
+  "compatibility": "Compatibilidad de CSS Nesting",
+  "analyze": "Analizar CSS",
+  "working": "Analizando…",
+  "review": "Informe de conversión",
+  "confirm": "Confirmar y mostrar código",
+  "workerError": "No se pudo iniciar el análisis."
+}

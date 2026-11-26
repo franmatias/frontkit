@@ -4,12 +4,25 @@ import css from 'highlight.js/lib/languages/css'
 import { Check, Copy, Download } from 'lucide-vue-next'
 import { computed, ref, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
+import { auditSources, sendAudit } from '../../core/storage/audit-handoff'
+import { useNotificationsStore } from '../../stores/notifications'
 import { useClipboard } from '../../composables/useClipboard'
 import { download } from '../../lib/download'
 import { useSettingsStore } from '../../stores/settings'
 
 const props = defineProps<{ outputs: Record<string, string>; name: string; extensions?: Record<string, string> }>()
 const { t, n } = useI18n()
+const router = useRouter()
+const notifications = useNotificationsStore()
+const auditOrigin = computed(() => auditSources.find(id => id === props.name))
+async function audit() {
+  if (!auditOrigin.value || !props.outputs.html) return
+  try {
+    const handoff = await sendAudit(auditOrigin.value, props.outputs.html, props.outputs.css)
+    await router.push({ name: 'a11y-audit', query: { handoff } })
+  } catch { notifications.push('tool.storageError') }
+}
 const copy = useClipboard()
 const settings = useSettingsStore()
 const heading = useId()
@@ -50,6 +63,7 @@ defineExpose({ copyCode })
   <section class="panel code-panel" :aria-labelledby="heading">
     <div class="panel-top"><h2 :id="heading">{{ t('tool.output') }}</h2>
       <div class="actions">
+        <button v-if="auditOrigin && outputs.html" class="btn" type="button" @click="audit">{{ t('tool.audit') }}</button>
         <button class="btn" type="button" @click="copyCode"><Check v-if="copied" :size="16" /><Copy v-else :size="16" /> {{ t('tool.copy') }}</button>
         <button class="btn" type="button" @click="download(name + (extensions?.[active] ?? ((active === 'tailwind' || active === 'plaintext') ? '.txt' : '.' + active)), code, 'text/plain')"><Download :size="16" /> {{ t('tool.download') }}</button>
       </div>

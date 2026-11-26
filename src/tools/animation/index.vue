@@ -1,12 +1,22 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { sendAnimation } from '../../core/storage/animation-handoff'
 import { useI18n } from 'vue-i18n'
 import RangeField from '../../components/shared/RangeField.vue'
 import ToolWorkspace from '../../components/shared/ToolWorkspace.vue'
 import AnimationPreview from './AnimationPreview.vue'
-import { directions, fills, jumps, logic, newFrame, presets, sorted, type State } from './logic'
+import { directions, fills, jumps, keyframes, logic, newFrame, presets, sorted, type State } from './logic'
 
 const { t } = useI18n()
+const router = useRouter()
+const transferError = ref(false)
+async function transfer(state: State) {
+  try {
+    const id = await sendAnimation(state.name, keyframes(state))
+    await router.push({ name: 'transitions', query: { handoff: id } })
+  } catch { transferError.value = true }
+}
 const label = (key: string) => t('detail.animation.' + key)
 const selected = ref('')
 const timeline = ref<HTMLElement>()
@@ -74,6 +84,8 @@ function dragCurve(event: PointerEvent, handle: 1 | 2, update: Update) {
 <template>
   <ToolWorkspace :logic="logic">
     <template #controls="{ state, update }">
+      <button type="button" class="btn" @click="transfer(state)">Usar fotogramas en animaciones por scroll</button>
+      <p v-if="transferError" role="alert">No se pudieron enviar los fotogramas.</p>
       <label>{{ label('name') }}<input :value="state.name" maxlength="32" required pattern="[a-z][a-z0-9\-]{0,31}"
         @change="($event.target as HTMLInputElement).reportValidity() && update(d => { d.name = value($event) })" /></label>
       <RangeField v-for="(limits, field) in playbackFields" :key="field" :label="label(field)" :min="limits[0]" :max="limits[1]" :model-value="state[field]"

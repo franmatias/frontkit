@@ -6,6 +6,8 @@ import { categories } from '../core/registry'
 import { useToolsStore } from '../stores/tools'
 const { t } = useI18n()
 const store = useToolsStore()
+const pictures = import.meta.glob<string>('../assets/catalog/*.jpg', { eager: true, query: '?url', import: 'default' })
+const picture = (id: string) => pictures['../assets/catalog/' + id + '.jpg']
 const groups = computed(() => [
   { key: 'home.available', items: store.filteredTools.filter(tool => tool.status !== 'coming-soon') },
   { key: 'home.planned', items: store.filteredTools.filter(tool => tool.status === 'coming-soon') },
@@ -37,7 +39,13 @@ const groups = computed(() => [
     <h2>{{ t(group.key) }}</h2>
     <div class="card-grid">
       <article v-for="tool in group.items" :key="tool.id" class="tool-card" :class="{ 'planned-card': tool.status === 'coming-soon' }">
-        <div v-if="tool.featured" class="card-art" :class="'art-' + tool.id" aria-hidden="true"><i /><i /><i /></div>
+        <RouterLink :to="{ name: tool.id }" class="card-link">
+          <span class="card-art">
+            <img v-if="picture(tool.id)" :src="picture(tool.id)" alt="" loading="lazy" decoding="async" width="630" height="354" />
+            <component v-else :is="tool.icon" :size="34" aria-hidden="true" />
+          </span>
+          <h3>{{ t('tools.' + tool.id + '.name') }} <ArrowUpRight :size="17" aria-hidden="true" /></h3>
+        </RouterLink>
         <div class="card-body">
           <div class="card-meta">
             <span class="tool-icon"><component :is="tool.icon" :size="18" /></span>
@@ -47,7 +55,6 @@ const groups = computed(() => [
               <Star :size="17" :fill="store.favorites.includes(tool.id) ? 'currentColor' : 'none'" />
             </button>
           </div>
-          <h3><RouterLink :to="{ name: tool.id }">{{ t('tools.' + tool.id + '.name') }} <ArrowUpRight :size="17" /></RouterLink></h3>
           <p>{{ t('tools.' + tool.id + '.description') }}</p>
           <div class="badges">
             <span v-if="tool.todo" class="badge">{{ t('status.todo') }}</span>

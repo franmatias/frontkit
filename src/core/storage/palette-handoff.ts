@@ -3,16 +3,16 @@ import { hexColor } from '../../lib/schema'
 import { read, write } from './db'
 
 const schema = v.strictObject({
-  from: v.literal('palette'), to: v.picklist(['gradient', 'tokens']), kind: v.literal('colors'),
+  from: v.picklist(['palette', 'color-converter']), to: v.picklist(['palette', 'gradient', 'tokens']), kind: v.literal('colors'),
   createdAt: v.number(),
   payload: v.pipe(v.array(v.strictObject({
     name: v.pipe(v.string(), v.regex(/^[a-z][a-z0-9-]{0,31}$/)), color: hexColor,
   })), v.minLength(3), v.maxLength(11)),
 })
 type Handoff = v.InferOutput<typeof schema>
-export async function sendPalette(to: Handoff['to'], payload: Handoff['payload']) {
+export async function sendPalette(to: Handoff['to'], payload: Handoff['payload'], from: Handoff['from'] = 'palette') {
   const id = crypto.randomUUID()
-  const data = v.parse(schema, { from: 'palette', to, kind: 'colors', payload, createdAt: Date.now() })
+  const data = v.parse(schema, { from, to, kind: 'colors', payload, createdAt: Date.now() })
   await write('handoff', 'inbox:' + id, data)
   return id
 }

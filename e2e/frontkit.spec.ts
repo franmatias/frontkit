@@ -78,10 +78,10 @@ for (const id of ['layout', 'palette', 'tokens', 'transform', 'filter', 'animati
   })
 }
 
-test('la segunda ampliación abre sus siete rutas TODO', async ({ page }) => {
+test('la segunda ampliación abre sus siete herramientas beta', async ({ page }) => {
   const ids = ['color-converter', 'encoders', 'css-reset', 'transitions', 'container-queries', 'image-optimizer', 'a11y-audit']
   for (const id of ids) {
     await page.goto('./tools/' + id)
-    await expect(page.locator('main .page-intro')).toContainText('TODO')
+    await expect(page.locator('main .tool-heading h1')).toBeVisible()
   }
 })

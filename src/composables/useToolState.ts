@@ -1,7 +1,7 @@
 import { onMounted, onUnmounted, ref, shallowRef, watch, type Ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { onExternalChange, read, write } from '../core/storage/db'
-import type { ToolLogic } from '../core/tool'
+import { projectToolState, type ToolLogic } from '../core/tool'
 import { useNotificationsStore } from '../stores/notifications'
 import { decodeShare, encodeShare } from './share'
 
@@ -33,8 +33,7 @@ export function useToolState<S extends object>(logic: ToolLogic<S>) {
     if (writeTimer === undefined) return
     clearTimeout(writeTimer)
     writeTimer = undefined
-    const next = { ...state.value }
-    for (const key of logic.transient ?? []) delete next[key]
+    const next = projectToolState(logic, state.value, 'store')
     saving = true
     try {
       await write('toolStates', logic.id, next, logic.schemaVersion)

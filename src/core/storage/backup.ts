@@ -1,4 +1,5 @@
 import * as v from 'valibot'
+import { encoderPrivateFields } from '../tool'
 import { type Snapshot, snapshot, stores } from './db'
 
 const name = v.pipe(v.string(), v.regex(/^[a-z0-9-]+(?::[a-z0-9-]+)?$/), v.maxLength(120))
@@ -19,11 +20,11 @@ const backupSchema = v.strictObject({
 })
 
 export async function createBackup() {
-  return { app: 'frontkit', backupVersion: 1, exportedAt: new Date().toISOString(), data: await snapshot() }
+  return { app: 'frontkit', backupVersion: 1, exportedAt: new Date().toISOString(), data: stripSecrets(await snapshot()) }
 }
 
 export function parseBackup(raw: string): Snapshot {
-  return v.parse(backupSchema, safeJson(raw)).data
+  return stripSecrets(v.parse(backupSchema, safeJson(raw)).data)
 }
 
 export function safeJson(raw: string): unknown {
@@ -35,4 +36,16 @@ export function safeJson(raw: string): unknown {
 
 export function countEntries(data: Snapshot) {
   return stores.reduce((total, store) => total + Object.keys(data[store]).length, 0)
+}
+
+function stripSecrets(data: Snapshot): Snapshot {
+  const clean = (state: unknown) => {
+    if (!state || typeof state !== 'object') return
+    for (const key of encoderPrivateFields) Reflect.deleteProperty(state, key)
+  }
+  clean(data.toolStates.encoders?.state)
+  for (const [key, item] of Object.entries(data.userPresets)) {
+    if (key.startsWith('encoders:') && item.state && typeof item.state === 'object' && 'state' in item.state) clean(item.state.state)
+  }
+  return data
 }

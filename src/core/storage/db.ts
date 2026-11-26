@@ -123,7 +123,7 @@ export function write(store: Store, key: string, state: unknown, schemaVersion =
   requestPersistence()
   return commit([{ store, key, value: record(state, schemaVersion) }])
 }
-const rememberedKeys = ['readability:text', 'json:input'] as const
+const rememberedKeys = ['readability:text', 'json:input', 'a11y-audit:input'] as const
 export function writeSettings(state: unknown, rememberInput: boolean) {
   requestPersistence()
   const entries: Change[] = [{ store: 'kv', key: 'settings', value: record(state) }]

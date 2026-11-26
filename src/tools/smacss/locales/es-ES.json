@@ -1,0 +1,14 @@
+{
+  "source": "CSS de entrada",
+  "output": "Formato",
+  "group": "Agrupar módulos",
+  "keep": "Conservar :hover y :focus con su módulo",
+  "split": "Separar declaraciones mixtas (experimental)",
+  "prefix": "Proponer prefijos para selectores simples",
+  "optionalHtml": "HTML opcional",
+  "analyze": "Clasificar reglas",
+  "working": "Procesando…",
+  "review": "Revisar clasificación SMACSS",
+  "confirm": "Confirmar y generar CSS",
+  "zip": "Descargar ZIP"
+}

@@ -1,0 +1,13 @@
+{
+  "html": "Fragmento HTML",
+  "optionalCss": "CSS opcional",
+  "prefix": "Prefijo",
+  "elementSep": "Separador de elemento",
+  "modifierSep": "Separador de modificador",
+  "dictionary": "Diccionario, una equivalencia por línea",
+  "analyze": "Analizar HTML",
+  "review": "Revisar propuestas BEM",
+  "confirm": "Confirmar y generar HTML",
+  "types": "Tipo",
+  "suggestion": "Clases propuestas"
+}

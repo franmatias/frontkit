@@ -3,11 +3,12 @@ import { Braces, Command, Github, Menu, PanelLeftClose, Sun } from 'lucide-vue-n
 import { computed, inject, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
-import { categories, findTool, tools } from '../../core/registry'
+import { findTool } from '../../core/registry'
 import { useNotificationsStore } from '../../stores/notifications'
 import { useSettingsStore } from '../../stores/settings'
 import { useToolsStore } from '../../stores/tools'
 import ToolErrorBoundary from '../shared/ToolErrorBoundary.vue'
+import CategoryNavigation from './CategoryNavigation.vue'
 import CommandPalette from './CommandPalette.vue'
 
 const route = useRoute()
@@ -37,12 +38,7 @@ const current = computed(() => findTool(route.meta.toolId))
             <component :is="tool.icon" :size="15" /> {{ t('tools.' + tool.id + '.name') }} <small v-if="tool.todo" class="badge">{{ t('status.todo') }}</small>
           </RouterLink>
         </template>
-        <template v-for="category in categories" :key="category">
-          <p class="nav-label">{{ t('category.' + category) }}</p>
-          <RouterLink v-for="tool in tools.filter(item => item.category === category)" :key="tool.id" :to="{ name: tool.id }">
-            <component :is="tool.icon" :size="15" /> {{ t('tools.' + tool.id + '.name') }} <small v-if="tool.todo" class="badge">{{ t('status.todo') }}</small>
-          </RouterLink>
-        </template>
+        <CategoryNavigation />
       </nav>
     </aside>
 
@@ -76,9 +72,7 @@ const current = computed(() => findTool(route.meta.toolId))
       <RouterLink to="/" @click="drawer?.close()">{{ t('app.catalog') }}</RouterLink>
       <RouterLink to="/settings" @click="drawer?.close()">{{ t('app.settings') }}</RouterLink>
       <RouterLink to="/about" @click="drawer?.close()">{{ t('app.about') }}</RouterLink>
-      <RouterLink v-for="tool in tools" :key="tool.id" :to="{ name: tool.id }" @click="drawer?.close()">
-        <component :is="tool.icon" :size="17" /> {{ t('tools.' + tool.id + '.name') }} <small v-if="tool.todo" class="badge">{{ t('status.todo') }}</small>
-      </RouterLink>
+      <CategoryNavigation @navigate="drawer?.close()" />
     </nav>
   </dialog>
   <CommandPalette ref="palette" />

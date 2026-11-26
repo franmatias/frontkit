@@ -3,7 +3,7 @@ import { readFile, readdir, writeFile } from 'node:fs/promises'
 
 const template = await readFile('scripts/sw.template.js', 'utf8')
 const assets = await readdir('dist/assets')
-const names = assets.filter(name => !/(?:monaco|\.worker|emmet|(?:^|-)worker(?:-|\.))/i.test(name))
+const names = assets.filter(name => !/(?:\.wasm$|audit-engine|(?:^|-)avif|(?:^|-)mozjpeg|squoosh|(?:^|-)encode-|(?:^|-)optimise-|monaco|\.worker|emmet|(?:^|-)worker(?:-|\.))/i.test(name))
 const files = ['index.html', 'favicon.svg', 'icon-192.png', 'icon-512.png', 'manifest.webmanifest', 'licenses.json', ...names.map(name => 'assets/' + name)]
 const revision = createHash('sha256')
 revision.update(template)

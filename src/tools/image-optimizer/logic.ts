@@ -10,12 +10,12 @@ export const extension=(format:Format)=>format==='jpeg'?'jpg':format
 const int=(min:number,max:number)=>v.pipe(numberBetween(min,max),v.integer())
 const schema=v.strictObject({
   format:v.picklist(formats), webp:int(1,100), avif:int(1,100), jpeg:int(1,100), png:int(0,6),
-  width:int(0,8192),height:int(0,8192),lockAspect:v.boolean(),fit:v.picklist(['contain','cover']),optimised:v.boolean(),
+  width:int(0,8192),height:int(0,8192),lockAspect:v.boolean(),keepIcc:v.optional(v.boolean()),fit:v.picklist(['contain','cover']),optimised:v.boolean(),
   responsive:v.boolean(),widths:v.pipe(v.string(),v.maxLength(80)), formats:v.pipe(v.array(v.picklist(formats)),v.minLength(1),v.maxLength(4)),
   placeholder:v.picklist(['none','dominant','tiny']),alt:v.pipe(v.string(),v.maxLength(200)),sizes:v.pipe(v.string(),v.maxLength(240)),
 })
 export type State=v.InferOutput<typeof schema>
-export const defaults=():State=>({format:'webp',webp:82,avif:65,jpeg:82,png:2,width:0,height:0,lockAspect:true,fit:'contain',optimised:false,
+export const defaults=():State=>({format:'webp',webp:82,avif:65,jpeg:82,png:2,width:0,height:0,lockAspect:true,fit:'contain',optimised:false,keepIcc:false,
   responsive:false,widths:'320, 640, 960, 1280, 1920',formats:['webp','jpeg'],placeholder:'none',alt:'',sizes:'100vw'})
 export const logic=defineTool<State>({id:'image-optimizer',schema,defaultState:defaults,presets:[],outputs:{}})
 export type Geometry={width:number;height:number;drawWidth:number;drawHeight:number}
@@ -30,8 +30,8 @@ export function geometry(width:number,height:number,state:Pick<State,'width'|'he
 export function responsiveWidths(source:string,maximum:number) {
   return [...new Set(source.split(',').map(it=>Math.min(maximum,Number(it.trim()))).filter(it=>Number.isInteger(it)&&it>0))].sort((a,b)=>a-b).slice(0,10)
 }
-export type Variant={file:string;format:Format;width:number;height:number;blob:Blob}
-export type Optimised={original:{width:number;height:number}; variants:Variant[]; placeholder:string}
+export type Variant={file:string;format:Format;width:number;height:number;blob:Blob;icc?:boolean}
+export type Optimised={original:{width:number;height:number}; variants:Variant[]; placeholder:string; iccRequested?:boolean}
 export function picture(result:Optimised,state:State) {
   const first=[...result.variants].sort((a,b)=>b.width-a.width)
   const fallback=first.find(row=>row.format==='jpeg'||row.format==='png')??first[0]

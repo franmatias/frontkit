@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { receiveBlob } from '../../core/storage/blob-handoff'
 import { sendAnimation } from '../../core/storage/animation-handoff'
 import { useI18n } from 'vue-i18n'
 import RangeField from '../../components/shared/RangeField.vue'
@@ -10,6 +11,23 @@ import { directions, fills, jumps, keyframes, logic, newFrame, presets, sorted, 
 
 const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
+const organicDraft = ref<Awaited<ReturnType<typeof receiveBlob>>>()
+watch(() => route.query.handoff, async (id, _, cleanup) => {
+  let active = true
+  cleanup(() => { active = false })
+  organicDraft.value = undefined
+  const draft = await receiveBlob(id).catch(() => undefined)
+  if (active) organicDraft.value = draft
+}, { immediate: true })
+function importOrganic(state: State) {
+  if (!organicDraft.value) return
+  const { start, end } = organicDraft.value
+  state.name = 'blob-morph'
+  state.keyframes = [newFrame('start', 0, { organic: start }), newFrame('end', 100, { organic: end })]
+  organicDraft.value = undefined
+  void router.replace({ query: {} })
+}
 const transferError = ref(false)
 async function transfer(state: State) {
   try {
@@ -84,6 +102,7 @@ function dragCurve(event: PointerEvent, handle: 1 | 2, update: Update) {
 <template>
   <ToolWorkspace :logic="logic">
     <template #controls="{ state, update }">
+      <button v-if="organicDraft" class="btn" type="button" @click="update(importOrganic)">Importar morph de forma orgánica</button>
       <button type="button" class="btn" @click="transfer(state)">Usar fotogramas en animaciones por scroll</button>
       <p v-if="transferError" role="alert">No se pudieron enviar los fotogramas.</p>
       <label>{{ label('name') }}<input :value="state.name" maxlength="32" required pattern="[a-z][a-z0-9\-]{0,31}"
@@ -130,7 +149,7 @@ function dragCurve(event: PointerEvent, handle: 1 | 2, update: Update) {
           <option v-for="frame in sorted(state)" :key="frame.id" :value="frame.id">{{ frame.percentage }} %</option>
         </select></label>
         <RangeField v-for="(limits, field) in frameFields" :key="field" :label="label(field)" :min="limits[0]" :max="limits[1]" :step="limits[2]"
-          :model-value="current(state)[field]" @update:model-value="update(d => { current(d)[field] = $event }, 'frame-' + field)" />
+          :model-value="current(state)[field]" @update:model-value="update(d => { current(d)[field] = $event; if (field === 'radius') delete current(d).organic }, 'frame-' + field)" />
         <label>{{ t('tool.color') }}<input type="color" :value="current(state).color || '#24664f'" @input="update(d => { current(d).color = value($event) }, 'frame-color')" /></label>
         <div class="actions">
           <button class="btn" type="button" :disabled="!current(state).color" @click="update(d => { current(d).color = '' })">{{ label('clearColor') }}</button>

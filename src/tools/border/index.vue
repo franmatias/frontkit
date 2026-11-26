@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import OrganicRadiusEditor from '../../components/shared/OrganicRadiusEditor.vue'
 import RangeField from '../../components/shared/RangeField.vue'
 import SendStyleButton from '../../components/shared/SendStyleButton.vue'
 import ToolWorkspace from '../../components/shared/ToolWorkspace.vue'
@@ -115,7 +116,11 @@ function drag(event: PointerEvent, state: BorderState, axis: Axis, corner: Corne
       </div>
     </template>
     <template #preview="{ state, update }">
-      <div ref="sample" class="border-stage">
+      <OrganicRadiusEditor class="organic-border" v-if="state.radius.mode === 'organic' && state.radius.unit === '%'" :radii="state.radius"
+        @change="(axis,i,n)=>update(s=>{s.radius[axis][i]=n},axis+'-'+i)">
+        <div class="border-sample" :style="declarations(state)">FrontKit</div>
+      </OrganicRadiusEditor>
+      <div v-else ref="sample" class="border-stage">
         <div class="border-sample" :style="declarations(state)">FrontKit</div>
         <template v-if="state.radius.mode === 'organic'">
           <span v-for="handle in handles" :key="handle.id" class="radius-handle" aria-hidden="true"
@@ -128,3 +133,5 @@ function drag(event: PointerEvent, state: BorderState, axis: Axis, corner: Corne
     </template>
   </ToolWorkspace>
 </template>
+
+<style scoped>.organic-border{inline-size:min(100%,10rem);aspect-ratio:1.4}.organic-border .border-sample{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}</style>

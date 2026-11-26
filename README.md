@@ -6,6 +6,15 @@ FrontKit es una suite de herramientas front-end que se ejecuta en el navegador. 
 
 | Herramienta | Ruta | Estado |
 | --- | --- | --- |
+| Constructor de tablas HTML | `/tools/table-builder` | Beta |
+| Open Graph y Meta Tags | `/tools/meta-tags` | Beta |
+| Favicons e iconos PWA | `/tools/favicon` | Beta |
+| Sprites de iconos SVG | `/tools/svg-sprite` | Beta |
+| Optimizador SVG | `/tools/svg-optimizer` | Beta |
+| Fondos y patrones | `/tools/backgrounds` | Beta |
+| Recortes con clip-path | `/tools/clip-path` | Beta |
+| Formas orgánicas | `/tools/blob` | Beta |
+| Combinador de fuentes | `/tools/font-pairing` | Beta |
 | Gradientes | `/tools/gradient` | Beta |
 | Sombras | `/tools/shadow` | Beta |
 | Bordes y radios | `/tools/border` | Beta |
@@ -34,6 +43,12 @@ Los generadores beta ofrecen vista previa, CSS y Tailwind, favoritos, presets y 
 El Playground actualiza la vista previa al editar HTML, CSS o JavaScript, permite cambiar la disposición, plegar los paneles y ajustar el ancho de los editores vecinos, evaluar JavaScript en la consola, guardar proyectos locales y exportar HTML o JSON. El editor incluye resaltado, números de línea y sugerencias de autocompletado para HTML, CSS, JavaScript y Emmet. Pulsa Tab para expandir abreviaturas Emmet en HTML y CSS. La integración de Monaco y sus workers sigue pendiente.
 
 La etapa 5 incluye [JSON](./src/tools/json), el decodificador de JWT y URL, datos de prueba reproducibles, Lorem Ipsum con limpieza de texto, legibilidad, valores fluidos con `clamp()` y escalas tipográficas. El catálogo muestra el estado de cada herramienta.
+
+Las etapas 6 y 7 incorporan fuentes, formas, SVG, favicons, metadatos y tablas. Las imágenes locales se abren en el navegador. Google Fonts y las imágenes remotas para metadatos requieren permiso antes de solicitar recursos externos.
+
+El catálogo de fuentes versionado funciona sin API en tiempo de ejecución. Para actualizarlo, ejecuta `node scripts/google-font-catalog.mjs` con `FRONTKIT_GOOGLE_FONTS_KEY` en el entorno local.
+
+El optimizador puede conservar perfiles ICC RGB al convertir entre PNG, JPEG y WebP. El ajuste es opcional y los datos EXIF se descartan tras aplicar la orientación.
 
 ## Desarrollo
 

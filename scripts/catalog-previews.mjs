@@ -32,6 +32,9 @@ try {
     bem:['Analizar HTML','Confirmar y generar HTML'],
     smacss:['Clasificar reglas','Confirmar y generar CSS'],
     'a11y-audit':['Auditar HTML'],
+    'svg-optimizer':['Optimizar SVG'],
+    'svg-sprite':['Generar sprite'],
+    favicon:['Usar SVG de ejemplo','Generar favicons'],
   }
   for (const id of selected) {
     const page = await context.newPage()
@@ -45,8 +48,10 @@ try {
         await page.getByRole('button',{name:'Optimizar imagen',exact:true}).click()
         await page.getByAltText('Imagen recodificada').waitFor()
       }
+      const previews = {'svg-optimizer':'.compare img', 'svg-sprite':'.icons-sheet', favicon:'.device-grid'}
+      if (previews[id]) await page.locator(previews[id]).first().waitFor()
       await page.evaluate(()=>document.fonts.ready)
-      const card = page.locator(id==='a11y-audit' ? '.preview-column > .panel' : id==='image-optimizer' ? '.compare' : '.preview-panel,.preview-column > .panel,.tool-controls,.main .panel').first()
+      const card = page.locator(id==='a11y-audit' ? '.preview-column > .panel' : id==='image-optimizer' || id==='svg-optimizer' ? '.compare' : id==='svg-sprite' ? '.icons-sheet' : id==='meta-tags' ? '.social article' : id==='favicon' ? '.devices' : id==='table-builder' ? '.frame-scroll' : '.preview-panel,.preview-column > .panel,.tool-controls,.main .panel').first()
       const target = await card.count() ? card : page.locator('#main')
       await target.scrollIntoViewIfNeeded()
       const box = await target.boundingBox()

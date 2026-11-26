@@ -93,7 +93,7 @@ function criteria(state: PaletteState, ratio: number) {
   return label('low')
 }
 const number = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2, minimumFractionDigits: 1 })
-async function send(state: PaletteState, to: 'gradient' | 'tokens') {
+async function send(state: PaletteState, to: 'gradient' | 'tokens' | 'backgrounds') {
   if (sending.value) return
   sending.value = true
   try {
@@ -146,6 +146,7 @@ async function send(state: PaletteState, to: 'gradient' | 'tokens') {
         <button type="button" class="btn" @click="update(shuffleColors)">{{ label('random') }}</button>
         <button type="button" class="btn" :disabled="sending" @click="send(state, 'gradient')">{{ label('gradient') }}</button>
         <button type="button" class="btn" :disabled="sending" @click="send(state, 'tokens')">{{ label('tokens') }}</button>
+        <button type="button" class="btn" @click="send(state, 'backgrounds')">Enviar a Fondos</button>
       </div>
       <fieldset class="inspector">
         <legend>{{ label('edit') }}</legend>

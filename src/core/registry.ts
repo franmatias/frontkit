@@ -13,6 +13,7 @@ export interface ToolDefinition {
   status: ToolStatus
   todo?: boolean
   sensitive?: boolean
+  externalRequests?: 'google-fonts' | 'remote-image'
   inputKind?: 'none' | 'text' | 'files'
   featured: boolean
   supportsTailwind: boolean
@@ -21,7 +22,6 @@ export interface ToolDefinition {
   component: () => Promise<Component>
 }
 
-const planned = () => import('../views/ComingSoonView.vue').then(module => module.default)
 export const tools: ToolDefinition[] = [
   {
     id: 'playground', category: 'code', icon: Code2, phase: "1b",
@@ -151,66 +151,66 @@ export const tools: ToolDefinition[] = [
   },
   {
     id: 'font-pairing', category: 'typography', icon: Type, phase: 6,
-    status: 'coming-soon', todo: true, featured: false,
+    status: 'beta', externalRequests: 'google-fonts', featured: false,
     supportsTailwind: true, supportsShareUrl: true,
     minViewport: 'mobile', tags: ['tools.font-pairing.tags.main'],
-    component: planned,
+    component: () => import('../tools/font-pairing/index.vue').then(module => module.default),
   },
   {
     id: 'blob', category: 'effects', icon: Blend, phase: 6,
-    status: 'coming-soon', todo: true, featured: false,
+    status: 'beta', featured: false,
     supportsTailwind: true, supportsShareUrl: true,
     minViewport: 'mobile', tags: ['tools.blob.tags.main'],
-    component: planned,
+    component: () => import('../tools/blob/index.vue').then(module => module.default),
   },
   {
     id: 'clip-path', category: 'effects', icon: Blend, phase: 6,
-    status: 'coming-soon', todo: true, featured: false,
+    status: 'beta', featured: false,
     supportsTailwind: true, supportsShareUrl: true,
     minViewport: 'mobile', tags: ['tools.clip-path.tags.main'],
-    component: planned,
+    component: () => import('../tools/clip-path/index.vue').then(module => module.default),
   },
   {
     id: 'backgrounds', category: 'effects', icon: Blend, phase: 6,
-    status: 'coming-soon', todo: true, featured: false,
+    status: 'beta', featured: false,
     supportsTailwind: true, supportsShareUrl: true,
     minViewport: 'mobile', tags: ['tools.backgrounds.tags.main'],
-    component: planned,
+    component: () => import('../tools/backgrounds/index.vue').then(module => module.default),
   },
   {
     id: 'svg-optimizer', category: 'assets', icon: Images, phase: 7,
-    status: 'coming-soon', todo: true, featured: false,
+    status: 'beta', inputKind: 'files', featured: false,
     supportsTailwind: false, supportsShareUrl: false,
     minViewport: 'mobile', tags: ['tools.svg-optimizer.tags.main'],
-    component: planned,
+    component: () => import('../tools/svg-optimizer/index.vue').then(module => module.default),
   },
   {
     id: 'svg-sprite', category: 'assets', icon: Images, phase: 7,
-    status: 'coming-soon', todo: true, featured: false,
+    status: 'beta', inputKind: 'files', featured: false,
     supportsTailwind: false, supportsShareUrl: false,
     minViewport: 'mobile', tags: ['tools.svg-sprite.tags.main'],
-    component: planned,
+    component: () => import('../tools/svg-sprite/index.vue').then(module => module.default),
   },
   {
     id: 'favicon', category: 'assets', icon: Images, phase: 7,
-    status: 'coming-soon', todo: true, featured: false,
+    status: 'beta', inputKind: 'files', featured: false,
     supportsTailwind: false, supportsShareUrl: true,
     minViewport: 'mobile', tags: ['tools.favicon.tags.main'],
-    component: planned,
+    component: () => import('../tools/favicon/index.vue').then(module => module.default),
   },
   {
     id: 'meta-tags', category: 'html', icon: Code2, phase: 7,
-    status: 'coming-soon', todo: true, featured: false,
+    status: 'beta', externalRequests: 'remote-image', featured: false,
     supportsTailwind: false, supportsShareUrl: true,
     minViewport: 'mobile', tags: ['tools.meta-tags.tags.main'],
-    component: planned,
+    component: () => import('../tools/meta-tags/index.vue').then(module => module.default),
   },
   {
     id: 'table-builder', category: 'html', icon: Code2, phase: 7,
-    status: 'coming-soon', todo: true, featured: false,
+    status: 'beta', featured: false,
     supportsTailwind: true, supportsShareUrl: true,
     minViewport: 'mobile', tags: ['tools.table-builder.tags.main'],
-    component: planned,
+    component: () => import('../tools/table-builder/index.vue').then(module => module.default),
   },
   {
     id: 'css-converter', category: 'refactor', icon: Workflow, phase: 8,

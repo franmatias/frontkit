@@ -104,7 +104,9 @@ const bounds={width:'Ancho máximo',height:'Alto máximo'}
       <RangeField :label="state.format==='png'?'Nivel PNG':'Calidad del formato'" :min="state.format==='png'?0:1" :max="state.format==='png'?6:100"
         :model-value="state[state.format]" @update:model-value="update(d=>{d[state.format]=$event},'quality')" />
       <label class="check"><input type="checkbox" :checked="state.optimised" @change="update(d=>{d.optimised=($event.target as HTMLInputElement).checked})" />Codificador optimizado JPEG / PNG</label>
-      <p>La recodificación aplica la orientación y descarta los metadatos de origen, incluidos GPS y perfil ICC.</p>
+      <p>La recodificación aplica la orientación y descarta los metadatos de origen, incluido el GPS.</p>
+      <label class="check"><input type="checkbox" :checked="state.keepIcc" @change="update(d=>{d.keepIcc=($event.target as HTMLInputElement).checked})" />Conservar perfil ICC RGB</label>
+      <p v-if="state.keepIcc">Disponible en PNG, JPEG y WebP con perfiles RGB compatibles. Las variantes AVIF se recodifican con la gestión de color del navegador.</p>
       <div class="field-grid">
         <label v-for="(label,field) in bounds" :key="field">{{label}}<input type="number" min="0" max="8192" :value="state[field]" @change="update(d=>{d[field]=Math.round(Math.max(0,Math.min(8192,Number(value($event))||0)))})" /></label>
       </div>
@@ -138,6 +140,7 @@ const bounds={width:'Ancho máximo',height:'Alto máximo'}
         <RangeField v-if="right" label="Divisor antes/después" :min="0" :max="100" v-model="ratio" />
         <p v-if="image">Original: {{byte(image.size)}} <template v-if="result">{{result.original.width}} × {{result.original.height}}</template></p>
         <p v-if="variant && image">Resultado: {{byte(variant.blob.size)}} · {{variant.width}} × {{variant.height}} · Ahorro {{Math.round((1-variant.blob.size/image.size)*100)}} %</p>
+        <p v-if="result?.iccRequested" role="status">Perfil ICC conservado en {{result.variants.filter(row=>row.icc).length}} de {{result.variants.length}} variantes.</p>
         <div v-if="result" class="actions"><button v-for="row in result.variants" :key="row.file" type="button" class="btn" @click="save(row.blob,row.file)">{{row.file}}</button></div>
         <button v-if="done.size" type="button" class="btn" @click="archive(state)">Descargar ZIP de resultados</button>
         <CodeOutputPanel v-if="result" name="imagen" :outputs="{html:picture(result,state),tailwind:'block h-auto max-w-full'}" />

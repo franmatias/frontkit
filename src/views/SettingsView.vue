@@ -94,6 +94,10 @@ function clear(factory: boolean) {
         <input v-model="store.data.preferences[field]" type="checkbox" @change="store.save()" />{{ t('settings.' + field) }}
       </label>
     </section>
+    <section class="panel field-grid">
+      <h2>Privacidad</h2>
+      <label class="check"><input type="checkbox" :checked="store.googleFonts" @change="store.setGoogleFonts(($event.target as HTMLInputElement).checked)" /> Permitir Google Fonts en las vistas previas</label>
+    </section>
     <section class="panel storage-panel">
       <h2>{{ t('settings.storage') }}</h2>
       <p>{{ t('settings.storageHelp') }}</p>

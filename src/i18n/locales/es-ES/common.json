@@ -108,6 +108,12 @@
     "unavailable": "Las atribuciones se generan al compilar la aplicación."
   },
   "tool": {
+    "cssPath": "Ruta CSS",
+    "svg": "SVG",
+    "tsx": "React TSX",
+    "jsx": "React JSX",
+    "vue": "Vue",
+    "svelte": "Svelte",
     "controls": "Controles",
     "preview": "Vista previa",
     "output": "Código generado",

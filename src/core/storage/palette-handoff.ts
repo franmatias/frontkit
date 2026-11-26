@@ -3,7 +3,7 @@ import { hexColor } from '../../lib/schema'
 import { read, write } from './db'
 
 const schema = v.strictObject({
-  from: v.picklist(['palette', 'color-converter']), to: v.picklist(['palette', 'gradient', 'tokens']), kind: v.literal('colors'),
+  from: v.picklist(['palette', 'color-converter']), to: v.picklist(['palette', 'gradient', 'tokens', 'backgrounds']), kind: v.literal('colors'),
   createdAt: v.number(),
   payload: v.pipe(v.array(v.strictObject({
     name: v.pipe(v.string(), v.regex(/^[a-z][a-z0-9-]{0,31}$/)), color: hexColor,

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import * as v from 'valibot'
-import { read, writeSettings } from '../core/storage/db'
+import { read, write, writeSettings } from '../core/storage/db'
 
 const range = (min: number, max: number) => v.pipe(v.number(), v.integer(), v.minValue(min), v.maxValue(max))
 const schema = v.strictObject({
@@ -30,8 +30,14 @@ const defaults = (): Settings => ({
 
 export const useSettingsStore = defineStore('settings', () => {
   const data = ref(defaults())
+  const googleFonts = ref(false)
+  const setGoogleFonts = (value: boolean) => {
+    googleFonts.value = value
+    void write('kv', 'consent:google-fonts', value).catch(() => {})
+  }
   async function hydrate() {
-    const stored = await read('kv', 'settings')
+    const [stored, consent] = await Promise.all([read('kv', 'settings'), read('kv', 'consent:google-fonts')])
+    googleFonts.value = consent?.state === true
     const result = v.safeParse(schema, stored?.state)
     data.value = stored?.schemaVersion === 1 && result.success ? result.output : defaults()
   }
@@ -45,5 +51,5 @@ export const useSettingsStore = defineStore('settings', () => {
     data.value.theme = values[(values.indexOf(data.value.theme) + 1) % values.length]
     save()
   }
-  return { data, hydrate, save, cycleTheme }
+  return { data, googleFonts, setGoogleFonts, hydrate, save, cycleTheme }
 })

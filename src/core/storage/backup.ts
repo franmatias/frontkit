@@ -43,6 +43,7 @@ function stripSecrets(data: Snapshot): Snapshot {
     if (!state || typeof state !== 'object') return
     for (const key of encoderPrivateFields) Reflect.deleteProperty(state, key)
   }
+  delete data.kv['consent:google-fonts']
   clean(data.toolStates.encoders?.state)
   for (const [key, item] of Object.entries(data.userPresets)) {
     if (key.startsWith('encoders:') && item.state && typeof item.state === 'object' && 'state' in item.state) clean(item.state.state)

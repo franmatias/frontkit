@@ -1,3 +1,4 @@
+import { attachProfile, profileFormat, readProfile, stripProfile } from './icc'
 import { extension, geometry, mime, responsiveWidths, type Format, type Optimised, type State } from './logic'
 
 export type Job={file:File;options:State}
@@ -42,6 +43,7 @@ function sample(source:ImageBitmap, mode:State['placeholder']) {
 }
 self.onmessage=async({data:{file,options}}:MessageEvent<Job>)=>{
   let image:ImageBitmap|undefined
+  let untagged:ImageBitmap|undefined
   try {
     image=await createImageBitmap(file,{imageOrientation:'from-image'})
     if(image.width*image.height>50_000_000)throw new Error('La imagen supera 50 megapíxeles.')
@@ -50,6 +52,18 @@ self.onmessage=async({data:{file,options}}:MessageEvent<Job>)=>{
     if(!widths.length)throw new Error('Indica al menos un ancho válido.')
     const outputs=options.responsive?[...new Set(options.formats)]:[options.format]
     const variants:Optimised['variants']=[]
+    const inputFormat=profileFormat(file.type)
+    let profile:Awaited<ReturnType<typeof readProfile>>
+    if(options.keepIcc&&inputFormat&&outputs.some(format=>format!=='avif')){
+      try{
+        const original=new Uint8Array(await file.arrayBuffer())
+        profile=await readProfile(original,inputFormat)
+        if(profile){
+          const pixels=await stripProfile(original,inputFormat)
+          untagged=await createImageBitmap(new Blob([pixels],{type:file.type}),{imageOrientation:'from-image',colorSpaceConversion:'none'})
+        }
+      }catch{profile=undefined}
+    }
     const token=file.name.replace(/\.[^.]+$/,'').replace(/[^a-z0-9-]+/gi,'-').replace(/^-+|-+$/g,'').slice(0,70)||'imagen'
     let total=0
     for(const width of widths)for(const format of outputs){
@@ -57,18 +71,36 @@ self.onmessage=async({data:{file,options}}:MessageEvent<Job>)=>{
       const canvas=new OffscreenCanvas(width,height)
       const ctx=canvas.getContext('2d')
       if(!ctx)throw new Error('No se puede dibujar la imagen.')
-      if(format==='jpeg'){ctx.fillStyle='#fff';ctx.fillRect(0,0,width,height)}
       const w=size.drawWidth*scale,h=size.drawHeight*scale
       ctx.imageSmoothingQuality='high'
-      ctx.drawImage(image,(width-w)/2,(height-h)/2,w,h)
-      const blob=await encode(canvas,ctx,format,options)
+      const draw=(source:ImageBitmap)=>{
+        ctx.clearRect(0,0,width,height)
+        if(format==='jpeg'){ctx.fillStyle='#fff';ctx.fillRect(0,0,width,height)}
+        ctx.drawImage(source,(width-w)/2,(height-h)/2,w,h)
+      }
+      const retain=untagged&&profile&&format!=='avif'
+      draw(retain ? untagged! : image)
+      let blob=await encode(canvas,ctx,format,options)
+      let icc=false
+      if(retain&&profile){
+        let preserved:Awaited<ReturnType<typeof attachProfile>>
+        try{preserved=await attachProfile(new Uint8Array(await blob.arrayBuffer()),format,profile,{width,height})}
+        catch{/* The browser encoder emitted an incompatible container. */}
+        if(preserved){
+          blob=new Blob([preserved],{type:blob.type})
+          icc=true
+        }else{
+          draw(image)
+          blob=await encode(canvas,ctx,format,options)
+        }
+      }
       total+=blob.size
       if(total>120_000_000)throw new Error('La salida supera 120 MB por lote.')
-      variants.push({file:token+'-'+width+'.'+extension(format),format,width,height,blob})
+      variants.push({file:token+'-'+width+'.'+extension(format),format,width,height,blob,icc})
       self.postMessage({kind:'progress',progress:Math.round(variants.length/(widths.length*outputs.length)*100)})
     }
     const placeholder=options.placeholder==='none'?'':await sample(image,options.placeholder)??''
-    self.postMessage({original:{width:image.width,height:image.height},variants,placeholder} satisfies Result)
+    self.postMessage({original:{width:image.width,height:image.height},variants,placeholder,iccRequested:options.keepIcc} satisfies Result)
   } catch(error) { self.postMessage({error:error instanceof Error?error.message:'No se pudo procesar la imagen.'} satisfies Result) }
-  finally { image?.close() }
+  finally { image?.close(); untagged?.close() }
 }

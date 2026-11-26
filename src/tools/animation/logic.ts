@@ -1,4 +1,5 @@
 import * as v from 'valibot'
+import { radius as organicRadius, radiusSchema } from '../blob/logic'
 import { defineTool } from '../../core/tool'
 import { decimal } from '../../lib/css'
 import { hexColor, identifier, numberBetween } from '../../lib/schema'
@@ -10,7 +11,7 @@ export const fills = ['none', 'forwards', 'backwards', 'both'] as const
 const frame = v.strictObject({
   id: identifier, percentage: numberBetween(0, 100), translateX: numberBetween(-240, 240), translateY: numberBetween(-240, 240),
   rotate: numberBetween(-360, 360), scale: numberBetween(0, 4), opacity: numberBetween(0, 100),
-  color: v.union([hexColor, v.literal('')]), radius: numberBetween(0, 100),
+  color: v.union([hexColor, v.literal('')]), radius: numberBetween(0, 100), organic: v.optional(radiusSchema),
 })
 export const timingSchema = v.strictObject({
     kind: v.picklist(['preset', 'bezier', 'steps', 'linear']), preset: v.picklist(presets), jump: v.picklist(jumps),
@@ -65,7 +66,7 @@ export function timingFunction(state: Pick<State, 'timing'>) {
 }
 export function frameStyle(frame: Frame) {
   return { transform: 'translate(' + frame.translateX + 'px, ' + frame.translateY + 'px) rotate(' + frame.rotate + 'deg) scale(' + frame.scale + ')',
-    opacity: String(frame.opacity / 100), borderRadius: frame.radius + 'px', ...(frame.color ? { backgroundColor: frame.color } : {}) }
+    opacity: String(frame.opacity / 100), borderRadius: frame.organic ? organicRadius(frame.organic) : frame.radius + 'px', ...(frame.color ? { backgroundColor: frame.color } : {}) }
 }
 export function keyframes(state: State) {
   const rules = sorted(state).map(frame => {

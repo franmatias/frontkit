@@ -4,7 +4,7 @@ import { extname, resolve, sep } from 'node:path'
 
 const base = '/frontkit/'
 const root = resolve('dist')
-const types = { '.wasm': 'application/wasm', '.jpg': 'image/jpeg', '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.json': 'application/json', '.webmanifest': 'application/manifest+json' }
+const types = { '.wasm': 'application/wasm', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.json': 'application/json', '.webmanifest': 'application/manifest+json' }
 createServer(async (request, response) => {
   const path = new URL(request.url, 'http://localhost').pathname
   if (!path.startsWith(base)) {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onScopeDispose, ref } from 'vue'
 import ToolWorkspace from '../../components/shared/ToolWorkspace.vue'
-import { checks, httpUrl, logic, type State } from './logic'
+import { checks, defaults, httpUrl, logic, type State } from './logic'
 const published={title:'Título',siteName:'Nombre del sitio',url:'URL canónica',locale:'Idioma y región',image:'URL de la imagen',imageAlt:'Texto alternativo',site:'Cuenta del sitio en X',creator:'Cuenta del autor en X'} as const
 const limits={title:180,siteName:90,url:600,locale:15,image:600,imageAlt:180,site:80,creator:80} as const
 const allowed=ref(''), local=ref(''), localBytes=ref(0), error=ref('')
@@ -17,6 +17,20 @@ function approve(s:State){
 function removeLocal(){
   if(local.value)URL.revokeObjectURL(local.value)
   local.value='';localBytes.value=0
+}
+function loadExample(update: (apply: (draft: State) => void) => void) {
+  removeLocal()
+  error.value = ''
+  const cover = new URL(import.meta.env.BASE_URL + 'icon-512.png', window.location.origin).href
+  allowed.value = cover
+  network.value = true
+  update(draft => Object.assign(draft, defaults(), {
+    type: 'article', title: 'Una paleta accesible para la web',
+    description: 'Aprende a elegir colores, comprobar el contraste y compartir una paleta accesible desde tu primer proyecto web.',
+    url: 'https://example.org/aula/paleta-accesible', siteName: 'Cuaderno de diseño',
+    author: 'Aula de diseño web', image: cover, imageAlt: 'Icono de FrontKit',
+    width: 512, height: 512, card: 'summary', published: '2026-10-01T09:00',
+  }))
 }
 function selectFile(event:Event){
   const file=(event.target as HTMLInputElement).files?.[0]
@@ -37,8 +51,15 @@ function hostname(url:string){return httpUrl(url)?new URL(url).hostname:''}
 <template>
   <ToolWorkspace :logic="logic">
     <template #controls="{state,update}">
+      <div class="usage-example">
+        <button class="btn" type="button" @click="loadExample(update)">Cargar ejemplo de artículo</button>
+        <small>Modifica el título y la descripción, compara las tarjetas y copia las etiquetas generadas al &lt;head&gt; de tu página.</small>
+      </div>
       <label v-for="(label,key) in published" :key="key">{{label}}<input type="text" :maxlength="limits[key]" :value="state[key]" @input="update(s=>{if(key==='image'){network=false;allowed=''}s[key]=val($event)},key)" /></label>
-      <label>Descripción<textarea maxlength="420" :value="state.description" @input="update(s=>{s.description=val($event)},'description')" /></label>
+      <label class="description-field" for="meta-description">Descripción</label>
+      <textarea id="meta-description" class="description-input" rows="4" maxlength="420" :value="state.description"
+        aria-describedby="description-count" @input="update(s=>{s.description=val($event)},'description')" />
+      <small id="description-count">{{state.description.length}} / 420 caracteres · Para buscadores se recomiendan hasta 155.</small>
       <div class="field-grid">
         <label>Tipo Open Graph<select :value="state.type" @change="update(s=>{s.type=val($event) as State['type']})"><option>website</option><option>article</option></select></label>
         <label>Tarjeta en X<select :value="state.card" @change="update(s=>{s.card=val($event) as State['card']})"><option>summary_large_image</option><option>summary</option></select></label>
@@ -75,5 +96,8 @@ function hostname(url:string){return httpUrl(url)?new URL(url).hostname:''}
   </ToolWorkspace>
 </template>
 <style scoped>
+.usage-example { display:grid;justify-items:start;gap:.45rem; }
+.description-input { width:100%;box-sizing:border-box;min-height:6rem;resize:vertical;padding:.65rem;font:inherit;line-height:1.5;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:.5rem; }
+
 .social{display:grid;gap:.65rem;width:100%}.social article{overflow:hidden;padding:.75rem;border:1px solid var(--line);border-radius:.65rem;background:var(--surface);overflow-wrap:anywhere}.social article img,.social-placeholder{width:100%;aspect-ratio:1.91;object-fit:cover;border-radius:.35rem}.social-placeholder{background:linear-gradient(135deg,#1b534a,#599779 62%,#e7b14b)}.social .compact img,.social .compact .social-placeholder{width:24%;aspect-ratio:1;float:inline-start;margin-inline-end:.75rem}.social h3{margin:.35rem 0}
 </style>

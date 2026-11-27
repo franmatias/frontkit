@@ -2,6 +2,7 @@
 import { computed, onMounted, onScopeDispose, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import RefactorWorkspace from '../../components/shared/RefactorWorkspace.vue'
+import RefactorPane from '../../components/shared/RefactorPane.vue'
 import RangeField from '../../components/shared/RangeField.vue'
 import { receiveCleaned } from '../../core/storage/html-cleaner-handoff'
 import { receiveAudit } from '../../core/storage/audit-handoff'
@@ -97,23 +98,30 @@ async function run(){
 }
 </script>
 <template>
-  <RefactorWorkspace id="a11y-audit" :outputs="results">
-    <button v-if="incoming" type="button" class="btn" @click="loadIncoming">Importar código enviado</button>
-    <label>HTML que se va a auditar<textarea v-model="html" rows="8" maxlength="500000" spellcheck="false" /></label>
-    <label>CSS opcional<textarea v-model="css" rows="4" maxlength="200000" spellcheck="false" /></label>
-    <p>La vista se abre aislada. Se quitan scripts y recursos remotos antes de analizar el documento.</p>
+  <RefactorWorkspace id="a11y-audit" options-title="Opciones de auditoría" :outputs="results">
+    <template #editors>
+      <RefactorPane kind="html" title="HTML">
+        <template #action><button v-if="incoming" type="button" class="btn" @click="loadIncoming">Importar código enviado</button></template>
+        <textarea v-model="html" aria-label="HTML que se va a auditar" maxlength="500000" spellcheck="false" autocapitalize="off" />
+      </RefactorPane>
+      <RefactorPane kind="css" title="CSS opcional">
+        <textarea v-model="css" aria-label="CSS opcional" maxlength="200000" spellcheck="false" autocapitalize="off" />
+      </RefactorPane>
+    </template>
     <fieldset><legend>Conjuntos de reglas</legend>
       <label v-for="tag in tags" :key="tag" class="check"><input v-model="options" :value="tag" type="checkbox" />{{tag}}</label>
     </fieldset>
     <label class="check"><input v-model="dark" type="checkbox" />Esquema oscuro</label>
     <label v-if="settings.data.preferences.rememberInput" class="check"><input v-model="remember" type="checkbox" />Recordar HTML y CSS en este equipo (hasta 100 KB)</label>
     <RangeField label="Ancho de la vista (px)" v-model="width" :min="280" :max="1000" />
-    <button type="button" class="btn primary" :disabled="loading||!html.trim()" @click="run">Auditar HTML</button>
+    <template #action><button type="button" class="btn primary" :disabled="loading||!html.trim()" @click="run">Auditar HTML</button></template>
+    <template #status>
+    <p>La vista se abre aislada. Se quitan scripts y recursos remotos antes de analizar el documento.</p>
     <p v-if="loading" role="status">Analizando la vista aislada…</p>
     <p v-if="error" role="alert">{{error}}</p>
+    </template>
     <template #review>
-      <section class="panel tool-controls">
-        <h2>Vista auditada</h2>
+      <RefactorPane kind="review" title="Vista auditada"><div class="tool-controls audit-review">
         <div v-if="documentHtml" class="frame-wrap"><iframe ref="frame" title="Documento auditado" sandbox="allow-scripts" :width="width" :srcdoc="documentHtml" /></div>
         <template v-if="report">
           <p role="status">{{report.violations.length}} infracciones · {{report.passes}} reglas superadas · {{report.manual.length}} a revisar manualmente · {{report.inapplicable}} no aplicables</p>
@@ -136,8 +144,8 @@ async function run(){
           <h3>Comprobaciones manuales</h3>
           <ul><li v-for="rule in manualChecks" :key="rule">{{rule}}</li></ul>
         </template>
-      </section>
+      </div></RefactorPane>
     </template>
   </RefactorWorkspace>
 </template>
-<style scoped>.frame-wrap{overflow:auto;max-width:100%}iframe{max-width:none;height:245px;border:1px solid var(--line);background:#fff}.tool-controls li{overflow-wrap:anywhere;margin-block:.3rem}details{margin-block:.35rem}fieldset{display:grid;gap:.35rem}</style>
+<style scoped>.audit-review{padding:.8rem 1rem;min-width:0}.frame-wrap{overflow:auto;max-width:100%}iframe{max-width:none;height:245px;border:1px solid var(--line);background:#fff}.tool-controls li{overflow-wrap:anywhere;margin-block:.3rem}details{margin-block:.35rem}fieldset{display:grid;gap:.35rem}</style>

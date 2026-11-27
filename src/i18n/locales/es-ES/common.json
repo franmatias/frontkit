@@ -270,7 +270,7 @@
     },
     "filter": {
       "name": "Filtros",
-      "description": "Aplica filtros como desenfoque, brillo o contraste a una imagen. Compara la versión filtrada con la original antes de copiar el CSS.",
+      "description": "Prueba desenfoque, brillo y contraste sobre fotografías de muestra o una imagen propia. Compara el antes y el después y copia el CSS.",
       "tags": {
         "main": "Filtros"
       }
@@ -431,7 +431,7 @@
     },
     "color-converter": {
       "name": "Conversor de color",
-      "description": "Convierte un color entre formatos CSS y comprueba si cabe en la gama de destino. Compara su contraste con otro color.",
+      "description": "Elige un píxel de una imagen o ajusta la luminosidad, el croma y el tono en OKLCH. Convierte el color entre formatos CSS, revisa su gama y comprueba el contraste.",
       "tags": {
         "main": "color conversion oklch gamut contraste"
       }

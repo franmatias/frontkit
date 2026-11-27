@@ -70,7 +70,7 @@ const label = (id: string) => t('detail.bem.' + id)
     <label>{{ label('prefix') }}<input v-model.trim="options.namespace" maxlength="24" placeholder="c-" /></label>
     <label>{{ label('elementSep') }}<input v-model="options.elementSep" maxlength="5" /></label>
     <label>{{ label('modifierSep') }}<input v-model="options.modifierSep" maxlength="5" /></label>
-    <div class="option-flags"><label v-for="flag in flags" :key="flag" class="check"><input v-model="options[flag]" type="checkbox" />{{ flagLabels[flag] }}</label></div>
+    <div class="refactor-flags"><label v-for="flag in flags" :key="flag" class="check"><input v-model="options[flag]" type="checkbox" />{{ flagLabels[flag] }}</label></div>
     <details><summary>{{ label('dictionary') }}</summary><textarea v-model="options.dictionary" :aria-label="label('dictionary')" rows="5" maxlength="4000" /></details>
     <template #action>
       <button type="button" class="btn primary" :disabled="!html.trim()" @click="analyze">{{ label('analyze') }}</button>

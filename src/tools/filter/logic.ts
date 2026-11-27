@@ -10,7 +10,7 @@ export const filters = {
   opacity: [0, 100, 100, '%'], saturate: [0, 300, 100, '%'], sepia: [0, 100, 0, '%'],
 } as const
 export const filterKeys = Object.keys(filters) as (keyof typeof filters)[]
-export const samples = ['landscape', 'portrait', 'transparent'] as const
+export const samples = ['landscape', 'portrait', 'transparent', 'astronaut', 'galaxies', 'photographer'] as const
 const schema = v.strictObject({
   target: v.picklist(['filter', 'backdrop-filter']), sample: v.picklist(samples),
   blur: numberBetween(0, 30), brightness: numberBetween(0, 250), contrast: numberBetween(0, 250),

@@ -76,7 +76,7 @@ const label = (id: string) => t('detail.smacss.' + id)
     </template>
     <label>{{ label('output') }}<select v-model="options.output"><option value="layers">Archivo con @layer</option><option value="files">Archivos separados (ZIP)</option></select></label>
     <label v-if="options.output === 'files'">{{ label('group') }}<select v-model="options.owners"><option value="owner">Por componente</option><option value="single">Un solo archivo</option></select></label>
-    <div class="option-flags"><label class="check"><input v-model="options.keepInteraction" type="checkbox" />{{ label('keep') }}</label>
+    <div class="refactor-flags"><label class="check"><input v-model="options.keepInteraction" type="checkbox" />{{ label('keep') }}</label>
     <label class="check"><input v-model="options.split" type="checkbox" />{{ label('split') }}</label>
     <label class="check"><input v-model="options.prefix" type="checkbox" />{{ label('prefix') }}</label></div>
     <template #action>

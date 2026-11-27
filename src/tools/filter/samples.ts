@@ -1,5 +1,13 @@
+// Fotografías de scikit-image v0.19.3: https://github.com/scikit-image/scikit-image/tree/v0.19.3/skimage/data
+import astronaut from './photos/astronaut.webp'
+import galaxies from './photos/hubble_deep_field.webp'
+import photographer from './photos/camera.webp'
+import type { FilterState } from './logic'
+
+const photos = { astronaut, galaxies, photographer }
 const cache = new Map<string, string>()
-export function sampleImage(id: 'landscape' | 'portrait' | 'transparent') {
+export function sampleImage(id: FilterState['sample']) {
+  if (id === 'astronaut' || id === 'galaxies' || id === 'photographer') return photos[id]
   const existing = cache.get(id)
   if (existing) return existing
   if (id === 'transparent') {

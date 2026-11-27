@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import ColorPicker from './ColorPicker.vue'
 import ToolWorkspace from '../../components/shared/ToolWorkspace.vue'
 import { useClipboard } from '../../composables/useClipboard'
 import { sendPalette } from '../../core/storage/palette-handoff'
@@ -42,7 +43,8 @@ async function send(state: State, to: 'palette' | 'gradient' | 'tokens') {
   <ToolWorkspace :logic="logic">
     <template #controls="{ state, update }">
       <label>Color CSS<input type="text" maxlength="180" :value="state.first" @input="update(d => { d.first = value($event) }, 'first')" /></label>
-      <button v-if="supportsDropper" type="button" class="btn" @click="pick(update)">Cuentagotas</button>
+      <ColorPicker :color="state.first" @pick="(color,group) => update(d => { d.first = color },group)" />
+      <button v-if="supportsDropper" type="button" class="btn" @click="pick(update)">Cuentagotas de pantalla</button>
       <label>Color de fondo<input type="text" maxlength="180" :value="state.second" @input="update(d => { d.second = value($event) }, 'second')" /></label>
       <p v-if="!description(state.first) || !description(state.second)" role="status">Introduce dos colores CSS válidos.</p>
       <label>Espacio de mezcla<select :value="state.space" @change="update(d => { d.space = value($event) as State['space'] })">

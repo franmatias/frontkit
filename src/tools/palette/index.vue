@@ -182,7 +182,7 @@ async function send(state: PaletteState, to: 'gradient' | 'tokens' | 'background
         <PaletteScene :swatches="state.swatches" :primary="swatchOf(state)" :vision="state.colorBlindnessPreview" />
         <h3 class="swatch-heading">{{ label('swatchTitle') }}</h3>
         <div class="swatches" role="group" tabindex="0" :aria-label="label('swatches')" @keydown="keydown($event, update)">
-          <article v-for="(color, index) in state.swatches" :key="color.id" class="swatch" @dragover.prevent @drop.prevent="update(d => move(d, dragging, index))">
+          <article v-for="(color, index) in state.swatches" :key="color.id" class="swatch-card" @dragover.prevent @drop.prevent="update(d => move(d, dragging, index))">
             <button type="button" class="sample" :style="{ background: simulateVision(color.color, state.colorBlindnessPreview) }"
               :aria-label="color.name + ' ' + color.color" :aria-pressed="swatchOf(state).id === color.id" draggable="true"
               @dragstart="dragging = color.id; $event.dataTransfer?.setData('text/plain', color.id)" @dragend="dragging = ''" @click="selected = color.id" />
@@ -228,12 +228,12 @@ async function send(state: PaletteState, to: 'gradient' | 'tokens' | 'background
 <style scoped>
 .palette-preview { display:grid;gap:.85rem;width:100%;min-width:0; }
 .swatch-heading { margin-top:.25rem; }
-.swatches { display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%, 6rem),1fr));gap:.4rem; }
-.swatch { min-width:0;overflow:hidden;border:1px solid var(--line);border-radius:.65rem;background:var(--surface); }
-.sample { display:block;width:100%;height:2.85rem;cursor:grab; }
+.swatches { display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%, 9rem),1fr));gap:.4rem; }
+.swatch-card { min-width:0;overflow:hidden;border:1px solid var(--line);border-radius:.65rem;background:var(--surface); }
+.sample { display:block;width:min(calc(100% - 1rem),clamp(5.5rem,10vw,8rem));height:auto;aspect-ratio:1;margin:.5rem auto;border-radius:50%;cursor:grab; }
 .sample[aria-pressed=true] { box-shadow:inset 0 0 0 2px white,inset 0 0 0 4px #192c26; }
 .sample:focus-visible { outline-offset:-4px; }
-.swatch-info { padding:.4rem;display:grid;gap:.15rem;overflow-wrap:anywhere;font-size:.74rem; }
+.swatch-info { padding:.55rem;display:grid;gap:.25rem;overflow-wrap:anywhere;font-size:.74rem; }
 .swatch-info code { font-size:.73rem;color:var(--muted); }
 .swatch-info .actions { gap:.1rem; }
 .swatch-info .icon-btn { min-width:32px;min-height:32px;padding:.2rem; }

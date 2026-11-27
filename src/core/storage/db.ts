@@ -123,17 +123,20 @@ export function write(store: Store, key: string, state: unknown, schemaVersion =
   requestPersistence()
   return commit([{ store, key, value: record(state, schemaVersion) }])
 }
-const rememberedKeys = ['readability:text', 'json:input', 'a11y-audit:input'] as const
+const rememberedKeys = ['readability:text', 'json:input', 'a11y-audit:input', 'html-cleaner:input'] as const
 export function writeSettings(state: unknown, rememberInput: boolean) {
   requestPersistence()
   const entries: Change[] = [{ store: 'kv', key: 'settings', value: record(state) }]
-  if (!rememberInput) for (const key of rememberedKeys) entries.push({ store: 'kv', key })
+  for (const key of rememberedKeys) {
+    if (!rememberInput || !permitsRemembering(state, key)) entries.push({ store: 'kv', key })
+  }
   return commit(entries)
 }
-function permitsRemembering(current: unknown) {
-  if (!current || typeof current !== 'object' || !('preferences' in current)) return true
-  const preferences = current.preferences
-  return !preferences || typeof preferences !== 'object' || !('rememberInput' in preferences) || preferences.rememberInput !== false
+function permitsRemembering(current: unknown, key: (typeof rememberedKeys)[number]) {
+  const preferences = current && typeof current === 'object' && 'preferences' in current ? current.preferences : undefined
+  const options = preferences && typeof preferences === 'object' ? preferences : {}
+  if ('rememberInput' in options && options.rememberInput === false) return false
+  return key !== 'html-cleaner:input' || ('rememberHtmlCleaner' in options && options.rememberHtmlCleaner === true)
 }
 export function writeRememberedInput(key: (typeof rememberedKeys)[number], state: unknown) {
   const value = record(state)
@@ -141,9 +144,9 @@ export function writeRememberedInput(key: (typeof rememberedKeys)[number], state
     if (database) {
       const tx = database.transaction('kv', 'readwrite')
       const settings = await tx.store.get('settings')
-      if (permitsRemembering(settings?.state)) await tx.store.put(value, key)
+      if (permitsRemembering(settings?.state, key)) await tx.store.put(value, key)
       await tx.done
-    } else if (permitsRemembering(memory.kv.settings?.state)) {
+    } else if (permitsRemembering(memory.kv.settings?.state, key)) {
       memory.kv[key] = value
     }
   })

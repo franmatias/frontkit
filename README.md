@@ -6,6 +6,7 @@ FrontKit es una suite de herramientas front-end que se ejecuta en el navegador. 
 
 | Herramienta | Ruta | Estado |
 | --- | --- | --- |
+| Limpiador y conversor HTML | `/tools/html-cleaner` | Beta |
 | Constructor de tablas HTML | `/tools/table-builder` | Beta |
 | Open Graph y Meta Tags | `/tools/meta-tags` | Beta |
 | Favicons e iconos PWA | `/tools/favicon` | Beta |
@@ -38,7 +39,7 @@ FrontKit es una suite de herramientas front-end que se ejecuta en el navegador. 
 | Optimizador de imágenes | `/tools/image-optimizer` | Beta |
 | Auditor de accesibilidad HTML | `/tools/a11y-audit` | Beta |
 
-Los generadores beta ofrecen vista previa, CSS y Tailwind, favoritos, presets y enlaces compartidos. `Ctrl/Cmd+K` abre la búsqueda global. La imagen y el título de cada ficha abren su herramienta. El menú lateral muestra las categorías plegadas al inicio.
+Los generadores beta ofrecen vista previa, CSS y Tailwind, favoritos, presets y enlaces compartidos. `Ctrl/Cmd+K` abre la búsqueda global. La ilustración y el título de cada ficha abren su herramienta. El menú lateral muestra las categorías plegadas al inicio.
 
 El Playground actualiza la vista previa al editar HTML, CSS o JavaScript, permite cambiar la disposición, plegar los paneles y ajustar el ancho de los editores vecinos, evaluar JavaScript en la consola, guardar proyectos locales y exportar HTML o JSON. El editor incluye resaltado, números de línea y sugerencias de autocompletado para HTML, CSS, JavaScript y Emmet. Pulsa Tab para expandir abreviaturas Emmet en HTML y CSS. Usa Formatear todo o el botón de cada panel para aplicar Prettier. El botón de Configuración de la cabecera permite cambiar el tema y el acento de la interfaz, su densidad, el movimiento y las opciones del editor. Hay diez temas de sintaxis, tres fuentes monoespaciadas y un control para mostrar los números de línea. Los proyectos incluyen plantillas interactivas con JavaScript y el editor se puede ampliar a pantalla completa. La integración de Monaco y sus workers sigue pendiente.
 
@@ -49,6 +50,8 @@ Las etapas 6 y 7 incorporan fuentes, formas, SVG, favicons, metadatos y tablas. 
 El catálogo de fuentes versionado funciona sin API en tiempo de ejecución. Para actualizarlo, ejecuta `node scripts/google-font-catalog.mjs` con `FRONTKIT_GOOGLE_FONTS_KEY` en el entorno local.
 
 El optimizador puede conservar perfiles ICC RGB al convertir entre PNG, JPEG y WebP. El ajuste es opcional y los datos EXIF se descartan tras aplicar la orientación.
+
+El limpiador procesa el HTML localmente y usa DOMPurify como segunda capa. La extracción directa requiere CORS. Se puede elegir Jina Reader para recuperar el HTML renderizado, AllOrigins para recuperar el original o un proxy HTTPS propio que acepte el parámetro `url`. La dirección se envía al servicio elegido al pulsar el botón de extracción. El HTML queda en memoria por defecto y se puede recordar en este navegador desde Configuración. Los enlaces compartidos solo incluyen las opciones.
 
 ## Desarrollo
 

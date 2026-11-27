@@ -70,5 +70,14 @@
   "filterList": "Buscador de tarjetas",
   "paletteSwitch": "Selector de tema",
   "formDemo": "Formulario de contacto",
-  "accordion": "Acordeón de preguntas"
+  "accordion": "Acordeón de preguntas",
+  "consoleReady": "Lista",
+  "consoleWaiting": "Esperando vista previa",
+  "consoleEmpty": "Aquí aparecerán los mensajes y el resultado de tus comandos.",
+  "consoleNoMatch": "No hay mensajes que coincidan con los filtros.",
+  "consoleTip": "Intro evalúa. Mayús + Intro añade una línea. ↑ y ↓ recuperan comandos anteriores.",
+  "consoleMessages": "Mensajes de la consola",
+  "examplesLabel": "Probar un comando",
+  "queued": "El comando se ejecutará cuando la vista previa esté lista.",
+  "preserveLogs": "Conservar mensajes al editar"
 }

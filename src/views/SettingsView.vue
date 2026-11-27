@@ -18,7 +18,7 @@ const storage = ref<StorageEstimate>()
 const modes = { light: Sun, dark: Moon, system: Monitor }
 const accentColors = { forest: '#146548', ocean: '#125886', iris: '#6940a0', coral: '#a03943' }
 const editorFlags = ['lineNumbers', 'wordWrap', 'minimap', 'loopProtection'] as const
-const prefsFlags = ['rememberInput', 'autoCopyOnClick', 'showTailwindByDefault'] as const
+const prefsFlags = ['rememberInput', 'rememberHtmlCleaner', 'autoCopyOnClick', 'showTailwindByDefault'] as const
 const editorNumbers = [
   { id: 'fontSize', min: 10, max: 32, step: 1 },
   { id: 'tabSize', min: 1, max: 8, step: 1 },
@@ -129,7 +129,7 @@ function clear(factory: boolean) {
       <label>{{ t('settings.defaultUnit') }}<select v-model="store.data.preferences.defaultUnit" @change="store.save()"><option v-for="value in ['px', '%', 'rem']" :key="value">{{ value }}</option></select></label>
       <label>{{ t('settings.colorContrastMethod') }}<select v-model="store.data.preferences.colorContrastMethod" @change="store.save()"><option v-for="value in ['wcag', 'apca']" :key="value" :value="value">{{ value.toUpperCase() }}</option></select></label>
       <label v-for="field in prefsFlags" :key="field" class="check">
-        <input v-model="store.data.preferences[field]" type="checkbox" @change="store.save()" />{{ t('settings.' + field) }}
+        <input v-model="store.data.preferences[field]" type="checkbox" :disabled="field === 'rememberHtmlCleaner' && !store.data.preferences.rememberInput" @change="store.save()" />{{ t('settings.' + field) }}
       </label>
     </section>
     <section class="panel field-grid">

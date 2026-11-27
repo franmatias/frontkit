@@ -16,6 +16,12 @@ function bootstrap(source, nonce, guard, loopMessage) {
             return '<' + value.tagName.toLowerCase() + (value.id ? '#' + value.id : '') + '>';
         if (typeof value !== 'object' || value === null)
             return String(value).slice(0, 1000);
+        if (Array.isArray(value)) {
+            if (seen.has(value)) return '[Circular]';
+            if (depth >= 3) return '[…]';
+            seen.add(value);
+            return '[' + value.slice(0, 12).map(item => describe(item, depth + 1, seen)).join(', ') + (value.length > 12 ? ', …]' : ']');
+        }
         if (seen.has(value))
             return '[↻]';
         if (depth >= 3)
@@ -48,7 +54,9 @@ function bootstrap(source, nonce, guard, loopMessage) {
     window.addEventListener('error', event => console.error(event.error ?? event.message));
     window.addEventListener('unhandledrejection', event => console.error(event.reason));
     Object.defineProperty(window, guard + '_result', { value(value) {
-        console.log(value);
+        if (value && typeof value.then === 'function') {
+            Promise.resolve(value).then(result => console.log(result), reason => console.error(reason));
+        } else if (value !== undefined) console.log(value);
     } });
     window.addEventListener('message', event => {
         if (event.source !== parent || event.data?.nonce !== nonce || typeof event.data.command !== 'string')

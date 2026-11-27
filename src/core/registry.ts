@@ -13,7 +13,7 @@ export interface ToolDefinition {
   status: ToolStatus
   todo?: boolean
   sensitive?: boolean
-  externalRequests?: 'google-fonts' | 'remote-image'
+  externalRequests?: 'google-fonts' | 'remote-image' | 'html-url'
   inputKind?: 'none' | 'text' | 'files'
   featured: boolean
   supportsTailwind: boolean
@@ -288,6 +288,13 @@ export const tools: ToolDefinition[] = [
     supportsTailwind: false, supportsShareUrl: false,
     minViewport: 'tablet', tags: ['tools.a11y-audit.tags.main'],
     component: () => import('../tools/a11y-audit/index.vue').then(module => module.default),
+  },
+  {
+    id: 'html-cleaner', category: 'html', icon: ScanLine, phase: 7,
+    status: 'beta', featured: true, sensitive: true, inputKind: 'text', externalRequests: 'html-url',
+    supportsTailwind: false, supportsShareUrl: true,
+    minViewport: 'mobile', tags: ['tools.html-cleaner.tags.main'],
+    component: () => import('../tools/html-cleaner/index.vue').then(module => module.default),
   },
 ]
 

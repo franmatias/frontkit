@@ -3,6 +3,7 @@ import { computed, onMounted, onScopeDispose, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import RefactorWorkspace from '../../components/shared/RefactorWorkspace.vue'
 import RangeField from '../../components/shared/RangeField.vue'
+import { receiveCleaned } from '../../core/storage/html-cleaner-handoff'
 import { receiveAudit } from '../../core/storage/audit-handoff'
 import { read, remove, writeRememberedInput } from '../../core/storage/db'
 import { useSettingsStore } from '../../stores/settings'
@@ -10,7 +11,7 @@ import { documentFor, exportsFor, impacts, lineOf, manualChecks, tags, type Repo
 
 const route=useRoute(),router=useRouter()
 const settings=useSettingsStore()
-const html=ref('<main><h1>Ejemplo para auditar</h1><img src="foto.jpg"><input type="text"><button></button></main>')
+const html=ref(receiveCleaned('a11y-audit') ?? '<main><h1>Ejemplo para auditar</h1><img src="foto.jpg"><input type="text"><button></button></main>')
 const css=ref('')
 const options=ref<string[]>(['wcag2a','wcag2aa','wcag21aa'])
 const width=ref(520)

@@ -23,7 +23,7 @@ const schema = v.strictObject({
   preferences: v.strictObject({
     defaultColorFormat: v.picklist(['hex', 'rgb', 'hsl', 'oklch']),
     defaultUnit: v.picklist(['px', '%', 'rem']), autoCopyOnClick: v.boolean(),
-    rememberInput: v.optional(v.boolean(), true), showTailwindByDefault: v.boolean(), colorContrastMethod: v.picklist(['wcag', 'apca']),
+    rememberInput: v.optional(v.boolean(), true), rememberHtmlCleaner: v.optional(v.boolean(), false), showTailwindByDefault: v.boolean(), colorContrastMethod: v.picklist(['wcag', 'apca']),
   }),
 })
 export type Settings = v.InferOutput<typeof schema>
@@ -33,7 +33,7 @@ const defaults = (): Settings => ({
   editor: { syntaxTheme: 'frontkit', fontFamily: 'system', lineNumbers: true, fontSize: 14, tabSize: 2, wordWrap: true, minimap: false, autoRun: false, loopProtection: true, autoRunDelayMs: 350 },
   preferences: {
     defaultColorFormat: 'hex', defaultUnit: 'px', autoCopyOnClick: false,
-    rememberInput: true, showTailwindByDefault: false, colorContrastMethod: 'wcag',
+    rememberInput: true, rememberHtmlCleaner: false, showTailwindByDefault: false, colorContrastMethod: 'wcag',
   },
 })
 

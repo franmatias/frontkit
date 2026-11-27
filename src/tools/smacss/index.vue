@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import RefactorPane from '../../components/shared/RefactorPane.vue'
 import RefactorWorkspace from '../../components/shared/RefactorWorkspace.vue'
 import { useWorker } from '../../composables/useWorker'
 import { zip } from './archive'
@@ -65,46 +66,58 @@ const label = (id: string) => t('detail.smacss.' + id)
 </script>
 <template>
   <RefactorWorkspace id="smacss" :outputs="outputs">
-    <label>{{ label('source') }}<textarea v-model="css" maxlength="200000" rows="9" spellcheck="false" /></label>
+    <template #editors>
+      <RefactorPane kind="css" :title="label('source')">
+        <textarea v-model="css" :aria-label="label('source')" maxlength="200000" spellcheck="false" autocapitalize="off" />
+      </RefactorPane>
+      <RefactorPane v-if="options.prefix" kind="html" :title="label('optionalHtml')">
+        <textarea v-model="html" :aria-label="label('optionalHtml')" maxlength="200000" spellcheck="false" autocapitalize="off" />
+      </RefactorPane>
+    </template>
     <label>{{ label('output') }}<select v-model="options.output"><option value="layers">Archivo con @layer</option><option value="files">Archivos separados (ZIP)</option></select></label>
     <label v-if="options.output === 'files'">{{ label('group') }}<select v-model="options.owners"><option value="owner">Por componente</option><option value="single">Un solo archivo</option></select></label>
-    <label class="check"><input v-model="options.keepInteraction" type="checkbox" />{{ label('keep') }}</label>
+    <div class="option-flags"><label class="check"><input v-model="options.keepInteraction" type="checkbox" />{{ label('keep') }}</label>
     <label class="check"><input v-model="options.split" type="checkbox" />{{ label('split') }}</label>
-    <label class="check"><input v-model="options.prefix" type="checkbox" />{{ label('prefix') }}</label>
-    <label v-if="options.prefix">{{ label('optionalHtml') }}<textarea v-model="html" maxlength="200000" rows="4" /></label>
-    <button type="button" class="btn primary" :disabled="busy || !css.trim()" @click="run(false)">{{ label('analyze') }}</button>
-    <p v-if="busy" role="status">{{ label('working') }}</p>
-    <p v-if="failed || result && 'error' in result" role="alert">{{ result && 'error' in result ? result.error.message : 'No se pudo iniciar el análisis.' }}</p>
+    <label class="check"><input v-model="options.prefix" type="checkbox" />{{ label('prefix') }}</label></div>
+    <template #action>
+      <button type="button" class="btn primary" :disabled="busy || !css.trim()" @click="run(false)">{{ label('analyze') }}</button>
+    </template>
+    <template #status>
+      <p v-if="busy" role="status">{{ label('working') }}</p>
+      <p v-if="failed || result && 'error' in result" role="alert">{{ result && 'error' in result ? result.error.message : 'No se pudo iniciar el análisis.' }}</p>
+    </template>
     <template #review>
-      <section v-if="review" class="panel tool-controls">
-        <h2>{{ label('review') }}</h2>
-        <div class="review-scroll">
-          <table><caption>Reglas y confianza</caption>
-            <thead><tr><th scope="col">Regla</th><th scope="col">Categoría</th><th scope="col">Confianza</th></tr></thead>
-            <tbody><tr v-for="entry in review.entries" :key="entry.id">
-              <th scope="row"><code>{{ entry.selector }}</code><small v-if="entry.path">{{ entry.path }}</small></th>
-              <td><select :aria-label="'Categoría para ' + entry.selector" :value="overrides[entry.id] ?? entry.category" @change="classify(entry.id, $event)">
-                <option v-for="category in categories" :key="category" :value="category">{{ labels[category] }}</option>
-              </select></td>
-              <td>{{ confidence[entry.confidence] }}</td>
-            </tr></tbody>
-          </table>
+      <RefactorPane v-if="review" kind="review" :title="label('review')">
+        <div class="tool-controls review-content">
+          <div class="review-scroll">
+            <table><caption>Reglas y confianza</caption>
+              <thead><tr><th scope="col">Regla</th><th scope="col">Categoría</th><th scope="col">Confianza</th></tr></thead>
+              <tbody><tr v-for="entry in review.entries" :key="entry.id">
+                <th scope="row"><code>{{ entry.selector }}</code><small v-if="entry.path">{{ entry.path }}</small></th>
+                <td><select :aria-label="'Categoría para ' + entry.selector" :value="overrides[entry.id] ?? entry.category" @change="classify(entry.id, $event)">
+                  <option v-for="category in categories" :key="category" :value="category">{{ labels[category] }}</option>
+                </select></td>
+                <td>{{ confidence[entry.confidence] }}</td>
+              </tr></tbody>
+            </table>
+          </div>
+          <p>Las capas cambian la prioridad. Las reglas normales fuera de capas prevalecen sobre las reglas normales en capas.</p>
+          <ul v-if="(output ?? review).conflicts.length">
+            <li v-for="item in (output ?? review).conflicts" :key="item.property">{{ item.property }} · {{ item.groups.map(group => labels[group]).join(', ') }}</li>
+          </ul>
+          <ul v-if="(output ?? review).warnings.length"><li v-for="item in (output ?? review).warnings" :key="item">{{ item }}</li></ul>
+          <p v-if="(output ?? review).changes.length">Actualiza las clases del HTML según el mapa de renombrado.</p>
+          <div class="actions">
+            <button type="button" class="btn" :disabled="busy" @click="run(true)">{{ label('confirm') }}</button>
+            <button v-if="output && options.output === 'files'" type="button" class="btn" @click="download">{{ label('zip') }}</button>
+          </div>
         </div>
-        <p>Las capas cambian la prioridad. Las reglas normales fuera de capas prevalecen sobre las reglas normales en capas.</p>
-        <ul v-if="(output ?? review).conflicts.length">
-          <li v-for="item in (output ?? review).conflicts" :key="item.property">{{ item.property }} · {{ item.groups.map(group => labels[group]).join(', ') }}</li>
-        </ul>
-        <ul v-if="(output ?? review).warnings.length"><li v-for="item in (output ?? review).warnings" :key="item">{{ item }}</li></ul>
-        <p v-if="(output ?? review).changes.length">Actualiza las clases del HTML según el mapa de renombrado.</p>
-        <div class="actions">
-          <button type="button" class="btn" :disabled="busy" @click="run(true)">{{ label('confirm') }}</button>
-          <button v-if="output && options.output === 'files'" type="button" class="btn" @click="download">{{ label('zip') }}</button>
-        </div>
-      </section>
+      </RefactorPane>
     </template>
   </RefactorWorkspace>
 </template>
 <style scoped>
+.review-content { padding:.8rem 1rem; min-width:0; }
 .review-scroll { overflow: auto; max-height: 28rem; }
 table { border-spacing: .5rem; width: 100%; text-align: start; }
 caption { text-align: start; }

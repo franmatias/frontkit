@@ -1196,3 +1196,177 @@ Pestañas independientes, todo local:
 | Regex catastrófica bloquea la pestaña | Worker con límite de tiempo y `terminate()` |
 | Licencia de `axe-core` (MPL-2.0) y de los códecs | Revisión en el spike de la Etapa 11; atribución en `/about`; sin modificar el código fuente de terceros |
 | El catálogo (38 herramientas) crece más que la capacidad de mantenerlo | Etapas incrementales, `pnpm new:tool`, librerías compartidas y DoD estricto |
+
+## 31. HTML Cleaner & Converter Kit
+
+**Ruta:** `/tools/html-cleaner` · **id:** `html-cleaner` · **Categoría:** `html` · **Etapa:** 7 (se añade al alcance de la Etapa 7 de la sección 29.1; catálogo total: **39 herramientas**) · **Móvil:** usable · **Compartir enlace:** solo opciones (nunca la entrada)
+
+Se aplican todas las reglas anteriores (privacidad, `ToolLogic`, DoD de las secciones 21 y 29.3, `neverPersist`). Donde hay conflicto, prevalece esta sección.
+
+### 31.1 Propósito, alcance y decisiones
+
+Recibe HTML «sucio» (scraping, editores WYSIWYG, Microsoft Word, Google Docs, correos electrónicos), lo **sanea**, lo **normaliza** y lo exporta como **HTML limpio**, **Markdown** (`.md`) o **texto plano** (`.txt`).
+
+Decisiones y ajustes respecto al planteamiento inicial:
+
+- **Extracción desde URL: fuera de la v1.** Un navegador no puede descargar páginas ajenas por las restricciones de CORS, y la única vía sería un *proxy* de terceros, que rompe la promesa de privacidad («sin backend, sin peticiones a terceros», sección 16.5). Alternativas que sí se ofrecen: pegar el código fuente, **pegar contenido copiado de una página renderizada** (el portapapeles aporta `text/html`) y cargar un archivo `.html`/`.htm`. Queda como decisión a confirmar (31.9) una futura opción *opt-in* con *proxy* configurado por el usuario.
+- **Motor basado en el DOM del navegador** (`DOMParser`), no en un analizador independiente: permite `querySelectorAll` para los selectores del usuario y reutiliza el mismo análisis sintáctico que el navegador. Consecuencia: **no se ejecuta en Worker** (el DOM no existe allí). Es una **excepción documentada** al punto 12 de la DoD (29.3); se compensa con procesado **troceado** (cede el hilo entre fases y lotes de nodos), barra de progreso, cancelación y límite de entrada de 2 MB.
+- **Tests de esta herramienta con `jsdom`** (⚠️ verificar) y un corpus de *fixtures*; la seguridad se valida además en el navegador real con Playwright (31.8).
+- **Reutilización:** el limpiador de pegados de Lorem (24.4) pasa a usar esta misma canalización con el preajuste `pegado-mínimo` (`lib/html/`), sin duplicar código.
+- **Dependencias nuevas** (⚠️ verificar versión, licencia y tamaño): `turndown` (Markdown) y `dompurify` (segunda capa de seguridad). Chunk diferido con presupuesto ≤ 90 KB gzip; atribuciones en `/about`.
+
+### 31.2 Arquitectura del pipeline
+
+Cuatro fases **secuenciales e independientes**. Cada una es una función pura sobre el árbol y sus opciones, devuelve su **informe** y puede ejecutarse o detenerse por separado (la UI permite ver el resultado intermedio de cada fase):
+
+```ts
+type PhaseResult = { report: PhaseReport; warnings: Warning[] };
+type Phase<O> = (doc: Document, options: O, ctx: PipelineContext) => PhaseResult;
+
+// 1 ingest(raw | file | clipboard) -> Document
+// 2 sanitize(doc, SanitizeOptions)  -> elimina código peligroso y etiquetas no estructurales
+// 3 normalize(doc, NormalizeOptions) -> atributos, estilos en línea, nodos vacíos, estructura
+// 4 serialize(doc, SerializeOptions) -> html | markdown | text
+```
+
+- **Informe acumulado:** recuentos por categoría (scripts, estilos, atributos, comentarios, nodos vacíos, píxeles de seguimiento, parámetros de seguimiento eliminados…), reducción de tamaño (bytes y %), avisos y histograma de etiquetas antes y después.
+- **Determinismo e idempotencia:** misma entrada y opciones, misma salida; `limpiar(limpiar(x))` es igual a `limpiar(x)`.
+- **Actualización:** automática con *debounce* (300 ms) hasta 200 KB; por encima, ejecución manual.
+- **Preajustes** (conjuntos de opciones): **Word**, **Google Docs**, **Correo (newsletter)**, **Scraping / artículo**, **Editor WYSIWYG**, **Mínimo seguro** (solo fase 2 obligatoria), **Estricto semántico** y **Personalizado**. Se **detecta la fuente por huellas** (`docs-internal-guid`, `MsoNormal`, `mso-`, `urn:schemas-microsoft-com:office`, `<meta name='Generator' content='Microsoft Word'>`, `gmail_quote`) y se **sugiere** el preajuste sin aplicarlo automáticamente.
+
+### 31.3 Fase 1 — Ingesta
+
+- **Pegado de código** en un editor (Monaco diferido o `<textarea>` en móvil).
+- **Pegado enriquecido:** un botón/zona «Pegar contenido copiado» lee el portapapeles (`text/html` y, como respaldo, `text/plain`) para el caso Word/Docs/web.
+- **Archivos:** `.html`, `.htm`, `.xhtml`, con `FileDropZone` (arrastrar o seleccionar, ≤ 2 MB). **Codificación:** BOM → `<meta charset>` → UTF-8, con selector manual (por ejemplo `windows-1252`) usando `TextDecoder`.
+- **Opcional (hito 2 de la Etapa 7):** archivos `.eml` extrayendo la parte `text/html` (MIME con *quoted-printable* y *base64*), sin adjuntos.
+- **Análisis:** `DOMParser` en modo `text/html`, que no ejecuta scripts ni carga recursos. Se conserva el HTML original para el *diff*. Si el fragmento está mal formado, se informa de que **el analizador lo ha corregido**.
+- **Contexto:** `baseUrl` opcional para convertir URLs relativas en absolutas (útil con contenido extraído de una web).
+
+### 31.4 Fase 2 — Saneamiento (*sanitization*)
+
+Dos capas con propósitos distintos:
+
+**Capa A — Seguridad (siempre activa, no desactivable).** Elimina o neutraliza:
+
+- `<script>`, `<noscript>`, `<iframe>`, `<frame>`, `<frameset>`, `<object>`, `<embed>`, `<applet>`, `<base>`, `<template>`, `<link>` ejecutables o de importación y `<meta http-equiv='refresh'>`.
+- Atributos de eventos `on*` y atributos `srcdoc`.
+- URLs con esquema `javascript:`, `vbscript:` o `data:` (salvo `data:image/png|jpeg|gif|webp` en `img[src]`) en `href`, `src`, `srcset`, `action`, `formaction`, `xlink:href` y `poster`.
+- Contenido activo de `<svg>` y `<math>` (`script`, `foreignObject`, `use` externo, animaciones que modifican `href`).
+- **Lista blanca estricta** de etiquetas y atributos para la salida, en lugar de lista negra: lo que no está permitido se elimina (conservando su texto cuando proceda).
+
+**Defensa en profundidad:** la salida HTML se pasa por **`DOMPurify`** con una configuración equivalente a la lista blanca como **segunda red de seguridad** (si procesa más de 2 MB se omite el preview y se avisa). Si `DOMPurify` elimina algo que la capa A no había quitado, se registra un **aviso de seguridad** (señal de posible fallo en la capa A). Además, un **control de estabilidad** (serializar → volver a analizar → serializar) detecta posibles *mutation XSS*: si el resultado no es estable, se vuelve a limpiar y se avisa.
+
+**Capa B — Ruido estructural (configurable por preajuste).**
+
+| Grupo | Opciones |
+| --- | --- |
+| Cabecera y metadatos | Eliminar `<head>`, `<title>`, `<meta>`, `<link>`; conservar el título si se exporta a Markdown con *frontmatter* |
+| Estilos | Eliminar `<style>` y hojas enlazadas |
+| Comentarios | Eliminar comentarios, incluidos los **condicionales de Office** (`<!--[if mso]>`, `<![if !supportLists]>`) y los de bloque de WordPress (`<!-- wp:paragraph -->`) |
+| Etiquetas de Office | Eliminar `<o:p>`, `<w:*>`, `<v:*>`, bloques `<xml>` |
+| Presentación obsoleta | Eliminar `<font>`, `<center>`, `<marquee>`, `<blink>` conservando su contenido |
+| Formularios | Quitar `<form>`, `<input>`, `<button>`, `<select>`, `<textarea>` (por defecto en scraping y correo) |
+| Elementos ocultos | Quitar nodos con `hidden`, `display:none`, `visibility:hidden` en estilo en línea |
+| Seguimiento | Quitar **píxeles de seguimiento** (`img` de 1×1 o con dimensiones 0, o de dominios típicos de *tracking*) |
+| Boilerplate de página | Quitar `nav`, `footer`, `aside`, `header`, anuncios y comentarios; **«Extraer contenido principal»**: usa `<main>`/`<article>` si existen o una heurística de densidad de texto y de enlaces, con vista previa del nodo elegido y control manual |
+| Selectores del usuario | **«Mantener solo»** (un selector CSS) y **«Eliminar elementos que coincidan»** (lista de selectores), con validación y recuento de coincidencias |
+
+### 31.5 Fase 3 — Normalización del DOM
+
+**Atributos (lista blanca por etiqueta).** Se conservan solo los útiles: globales `lang`, `dir`, `title`; `a[href]` (con `target`/`rel` gestionados); `img[src|alt|width|height|srcset|sizes]`; tablas `colspan`, `rowspan`, `scope`, `headers`; `ol[start|reversed|type]`, `li[value]`, `blockquote[cite]`, `time[datetime]`, `abbr[title]`, `code[class='language-*']`. Opciones: `id` (quitar o conservar), `class` (quitar todas, conservar, o **quitar solo las de Office** `Mso*`), `data-*` (se quitan por defecto), `aria-*` y `role` (se conservan por defecto por accesibilidad). Se eliminan atributos de presentación obsoletos (`align`, `bgcolor`, `valign`, `border`, `cellpadding`, `cellspacing`, `width` en tablas…).
+
+**Estilos en línea.** Por defecto se eliminan todos, pero antes se pueden **convertir en semántica** (opción activada en Word/Docs):
+
+| Estilo | Resultado |
+| --- | --- |
+| `font-weight: bold \| 700` | `<strong>` |
+| `font-style: italic` | `<em>` |
+| `text-decoration: underline` | `<u>` (opcional) |
+| `text-decoration: line-through` | `<s>` |
+| `vertical-align: super \| sub` | `<sup>` / `<sub>` |
+
+**Casos específicos de origen:**
+
+- **Google Docs:** desenvolver el `<b style='font-weight:normal' id='docs-internal-guid-…'>` que envuelve todo el contenido; quitar `<p>` internos de los `<li>`; reconstruir listas anidadas.
+- **Word:** convertir `MsoNormal` y similares en `<p>`; **reconstruir listas reales** (`<ul>`/`<ol>`) a partir de párrafos con `MsoListParagraph`, `mso-list` o viñetas/numeración escritas como texto, usando el nivel indicado; retirar `<o:p>&nbsp;</o:p>`.
+- **Correo:** **desmaquetar tablas de maquetación** (sin `<th>`, anidadas, con `role='presentation'` o sin datos tabulares) convirtiéndolas en bloques; conservar las tablas de datos. Quitar `gmail_quote` o dejarlo como `blockquote` según opción.
+
+**Enlaces e imágenes:**
+
+- Quitar `<a>` sin `href` o con `href` vacío conservando el texto; añadir `rel='noopener noreferrer'` si `target='_blank'` (o quitar `target`).
+- **Quitar parámetros de seguimiento** (`utm_*`, `fbclid`, `gclid`, `mc_cid`, `mc_eid`…) y **desenvolver redirecciones** conocidas (por ejemplo `google.com/url?q=…` o *Safe Links* de Outlook) recuperando la URL original.
+- Aplicar `baseUrl` a rutas relativas. Las imágenes `data:` en Base64 se conservan, se eliminan o se avisa según tamaño (umbral configurable).
+
+**Texto y espacios.** Entidades normalizadas; `&nbsp;` → espacio normal (opción, con excepción entre número y unidad si se desea); espacios colapsados fuera de `pre`, `code` y `textarea`; **caracteres invisibles** eliminados (reutiliza `lib/text`, 24.4); comillas tipográficas → rectas (opcional); `<br><br>` → nuevo párrafo (opción) y `<br>` finales eliminados.
+
+**Nodos vacíos y estructura:**
+
+- Eliminación **recursiva** de inline vacíos (`span`, `b`, `i`, `u`, `a`, `font`) y de bloques vacíos o con solo `&nbsp;` (`p`, `div`, `li`, `h1`–`h6`), conservando los vacíos significativos (`td`, `th`, `img`, `br`, `hr`).
+- `span` sin atributos desenvueltos; inline idénticos adyacentes **fusionados** (`<b>a</b><b>b</b>` → `<b>ab</b>`); `div` con solo contenido en línea → `<p>` (o desenvolver `div` según opción); `<b>`→`<strong>` y `<i>`→`<em>` (opción).
+- **Encabezados:** detección opcional de «falsos títulos» (`<p><strong>…</strong></p>` o `font-size` grande) → `<h2>` (desactivada por defecto), **desplazamiento de nivel** (por ejemplo h1→h2) y **normalización de la jerarquía** para no saltar niveles.
+
+### 31.6 Fase 4 — Serialización y exportación
+
+Opciones comunes: **fin de línea** LF o CRLF, descarga con nombre y extensión (`.html`, `.md`, `.txt`), copia al portapapeles y contador de líneas, caracteres y palabras.
+
+**HTML limpio.**
+
+- Formato: *pretty-print* (sangría 2/4) o minificado; solo `<body>` (por defecto) o documento completo con `<!doctype html>`, `lang` y `<meta charset>`.
+- Escapado mínimo y consistente (`&amp; &lt; &gt; &quot;`), comillas dobles en atributos, orden estable de atributos, elementos vacíos como `<br>` o `<br />` según opción.
+- Resaltado con `highlight.js/core` (lenguaje `xml`).
+
+**Markdown** (motor `turndown` con reglas propias ⚠️ verificar):
+
+- Opciones: encabezados ATX o setext; viñetas `-` o `*`; énfasis `*` o `_`; bloques de código con \`\`\` o \~\~\~ y lenguaje tomado de `language-*`; enlaces en línea o por referencia; salto de línea con dos espacios o con barra invertida; `hr` como `---`; **escapado** de caracteres especiales de Markdown en el texto.
+- **GFM:** tablas, listas de tareas (`- [ ]`), tachado y *autolinks*.
+- **Elementos sin equivalente:** política configurable (**mantener como HTML**, **descartar** o **solo texto**). Las **tablas complejas** (con `colspan`/`rowspan` o bloques dentro de celdas) no caben en GFM: se mantienen como tabla HTML o se aplanan, y se registra un aviso.
+- **Frontmatter YAML** opcional (`title` tomado de `<title>` o del primer `h1`, `source`, `date`).
+- Imágenes con `![alt](src 'title')`; aviso si falta `alt`.
+
+**Texto plano:**
+
+- Bloques separados por una línea en blanco; `<br>` como salto; `<pre>` preservado literalmente.
+- Listas con ` -  ` o `•` y numeradas con sangría por nivel; citas con prefijo ` >  ` (opción).
+- **Tablas:** columnas separadas por tabuladores o alineadas en ASCII.
+- **Enlaces:** `texto (url)`, solo texto o **notas al pie** numeradas `[1]` al final; imágenes como texto alternativo o eliminadas.
+- Encabezados en texto normal, subrayados con `=`/`-` o en mayúsculas; ajuste de línea (sin ajuste, 72 u 80 columnas) y compactación de líneas en blanco; entidades decodificadas y espacios invisibles normalizados.
+
+### 31.7 Interfaz y estado
+
+- **Distribución:** Entrada | Opciones e informe | Salida (en móvil, pestañas). Pestañas de salida: **HTML**, **Markdown**, **Texto**, **Vista previa**, **Diferencias** (original frente a resultado con `SplitDiffView`/Monaco diferido) e **Informe**.
+- **Vista previa:** `<iframe sandbox=''>` (sin scripts, sin formularios, sin ventanas emergentes) con `srcdoc`. A diferencia del Playground, aquí el contenido es **nuestro HTML ya saneado** y no código a ejecutar, así que el propio `srcdoc` incluye una política CSP restrictiva por `<meta>` (`default-src 'none'; img-src data:; style-src 'unsafe-inline'`) y el atributo `referrerpolicy='no-referrer'`. **Las imágenes remotas no se cargan por defecto** (evita activar píxeles de seguimiento); un interruptor explícito lo permite, avisando de que se harán peticiones externas.
+- **Informe:** recuentos por categoría y fase, reducción de tamaño, histograma de etiquetas antes y después, avisos (HTML corregido por el analizador, tablas complejas en Markdown, imágenes Base64 pesadas, inestabilidad de serialización, aviso de seguridad de `DOMPurify`), con enlaces para saltar al fragmento afectado en el *diff*.
+- **Estado (`HtmlCleanerState`):** `input` (transitorio y en `neverPersist`, porque el contenido pegado de un correo o documento puede incluir datos personales; se puede activar su persistencia en Configuración), `inputMeta { source, filename, encoding }`, `preset`, `sanitize { … }`, `normalize { … }`, `output { format, html, markdown, text }`, `baseUrl`, `stopAtPhase`.
+- **Compartir enlace:** solo el preajuste y las opciones, nunca la entrada.
+- **Teclado y accesibilidad:** atajos para pegar, copiar la salida y cambiar de pestaña; resultados anunciados en una región `aria-live` («Limpieza completada: 38 % menos»); sin dependencia del arrastre.
+
+### 31.8 Seguridad, rendimiento y pruebas
+
+- **Nunca `v-html`** ni `innerHTML` con la entrada o la salida; el texto se muestra en editores o como texto, y el preview solo en el iframe descrito.
+- **Rendimiento:** límite de 2 MB; procesado troceado con cesión de hilo entre fases y lotes de nodos; objetivo de **sin tareas largas > 200 ms** en un documento de 2 MB; cancelación inmediata.
+- **Corpus de pruebas (*fixtures*):** Word (Windows y Mac), Google Docs (listas anidadas, tablas), correos de Gmail y Outlook (tablas de maquetación, *Safe Links*), exportaciones de Notion, WordPress clásico y Gutenberg, y artículos de Medium/Substack guardados.
+- **Seguridad:** corpus de **XSS** (subconjunto de OWASP y vectores de *mutation XSS* con `svg`, `math`, `style` y `noscript`) que debe producir **cero contenido ejecutable**; test e2e en Chromium, Firefox y WebKit que carga la salida en un iframe y verifica que no se ejecuta nada ni sale ninguna petición de red.
+- **Propiedades:** idempotencia; **conservación del texto visible** (salvo elementos eliminados explícitamente) con *property-based testing*; la salida siempre se analiza sin errores.
+- **Markdown:** *golden files* por preajuste y comprobación de que al volver a convertir Markdown a HTML en el test el texto coincide.
+- **E2E:** pegado real con `text/html` desde el portapapeles (Playwright), carga de archivos con distintas codificaciones, descargas con nombre y extensión correctos.
+
+### 31.9 Integraciones, riesgos y decisiones por confirmar
+
+- **Integraciones (*handoff*, sección 15):** «Enviar a BEM», «Auditar accesibilidad» (30.9) y «Importar tabla» en Table Builder (una tabla HTML limpia se convierte en filas y columnas editables); el limpiador de Lorem comparte la canalización.
+
+| Riesgo | Mitigación |
+| --- | --- |
+| Un fallo del saneamiento permite XSS | Lista blanca, `DOMPurify` como segunda capa, control de estabilidad, corpus de XSS en CI y e2e en tres motores |
+| Pérdida de contenido por limpieza excesiva | Informe y *diff* visibles, opciones por fase, conservación de texto verificada por propiedad |
+| Reconstrucción de listas de Word imprecisa | *Fixtures* reales de Word, avisos por nivel inconsistente, opción de desactivarla |
+| Markdown con tablas o HTML sin equivalente | Política configurable y avisos explícitos |
+| Rendimiento con documentos grandes sin Worker | Límite de 2 MB, procesado troceado, cancelación, prueba de rendimiento en CI |
+| Peticiones accidentales desde el preview | `sandbox` vacío, CSP en el `srcdoc`, imágenes remotas desactivadas por defecto |
+
+**Decisiones que conviene confirmar:**
+
+1. **Extracción desde URL:** se deja fuera de la v1 por CORS y privacidad. ¿Prefieres aplazarla, o una opción *opt-in* con un *proxy* configurado por el usuario?
+2. **Soporte de `.eml`:** ¿hito de la Etapa 7 o fuera de alcance?
+3. **`DOMPurify` como segunda capa:** añade una dependencia (≈ 20 KB gzip ⚠️); ¿la aceptas o prefieres solo la lista blanca propia?
+4. **Persistencia de la entrada:** desactivada por defecto por contener posibles datos personales; ¿la quieres activada por defecto como en el resto de herramientas?

@@ -8,6 +8,7 @@ import { useRouter } from 'vue-router'
 import { auditSources, sendAudit } from '../../core/storage/audit-handoff'
 import { useNotificationsStore } from '../../stores/notifications'
 import { useClipboard } from '../../composables/useClipboard'
+import { highlightSegments } from '../../lib/code-highlight'
 import { download } from '../../lib/download'
 import { useSettingsStore } from '../../stores/settings'
 
@@ -33,22 +34,9 @@ const active = computed(() => keys.value.includes(current.value)
   : settings.data.preferences.showTailwindByDefault && keys.value.includes('tailwind') ? 'tailwind' : keys.value[0])
 const code = computed(() => props.outputs[active.value] ?? '')
 highlight.registerLanguage('css', css)
-type Segment = { text: string; classes: string }
-const segments = computed<Segment[]>(() => {
-  if (active.value !== 'css' || code.value.length > 100_000) return [{ text: code.value, classes: '' }]
-  const rendered = highlight.highlight(code.value, { language: 'css' }).value
-  const parsed = new DOMParser().parseFromString(rendered, 'text/html')
-  const result: Segment[] = []
-  function collect(node: Node, classes = '') {
-    if (node.nodeType === Node.TEXT_NODE) result.push({ text: node.textContent ?? '', classes })
-    else if (node instanceof Element) {
-      const next = [classes, node.className].filter(Boolean).join(' ')
-      for (const child of node.childNodes) collect(child, next)
-    }
-  }
-  collect(parsed.body)
-  return result
-})
+const segments = computed(() => active.value === 'css'
+  ? highlightSegments(code.value, 'css')
+  : [{ text: code.value, classes: '' }])
 const copied = ref(false)
 let reset: ReturnType<typeof setTimeout>
 async function copyCode() {

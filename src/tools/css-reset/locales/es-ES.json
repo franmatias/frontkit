@@ -30,5 +30,12 @@
   "scheme": "Esquema de color",
   "interpolate": "Interpolar tamaños intrínsecos",
   "isolate": "Aislar el contexto de la aplicación",
-  "font": "Usar el token de fuente base"
+  "font": "Usar el token de fuente base",
+  "ruleList": "Reglas del reset",
+  "searchRules": "Buscar reglas",
+  "allRules": "Activar todas",
+  "noRules": "Desactivar todas",
+  "emptyRules": "No se encontraron reglas.",
+  "enableGroup": "Activar este grupo",
+  "clearGroup": "Desactivar este grupo"
 }

@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 import { useRoute,useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { receiveCleaned } from '../../core/storage/html-cleaner-handoff'
 import { receiveTableDraft } from '../../core/storage/table-handoff'
 import { useWorker } from '../../composables/useWorker'
 import type { Generation } from '../mock-data/generator'
@@ -11,6 +12,7 @@ import RangeField from '../../components/shared/RangeField.vue'
 import { css,html,logic,makeColumn,modes,parseGrid,replaceRows,sortCode,type State } from './logic'
 const route=useRoute(),router=useRouter(),{t}=useI18n()
 const incoming=ref<Awaited<ReturnType<typeof receiveTableDraft>>>(), importRows=ref<{headers:string[];values:string[][]}>()
+importRows.value=receiveCleaned('table-builder')
 const source=ref(''),firstHeaders=ref(true), error=ref(''), start=ref(0), width=ref(460)
 const worker=useWorker<Recipe,Generation>(()=>new Worker(new URL('../mock-data/mock-worker.ts',import.meta.url),{type:'module'}))
 const modesLabel={scroll:'Desplazamiento horizontal',sticky:'Primera columna fija',cards:'Tarjetas',priority:'Ocultar columnas secundarias'}

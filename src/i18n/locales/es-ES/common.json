@@ -96,6 +96,7 @@
     "showTailwindByDefault": "Mostrar Tailwind primero",
     "colorContrastMethod": "Método de contraste",
     "rememberInput": "Recordar el contenido de entrada",
+    "rememberHtmlCleaner": "Recordar también el HTML del limpiador en este navegador",
     "defaultColorFormat": "Formato de color",
     "defaultUnit": "Unidad",
     "syntaxTheme": "Tema de resaltado de sintaxis",
@@ -205,271 +206,283 @@
     "sort": "Reordenar",
     "confirmReset": "¿Restablecer los controles de esta herramienta?"
   },
+  "refactor": {
+    "options": "Opciones de conversión",
+    "collapse": "Plegar {title}",
+    "expand": "Desplegar {title}"
+  },
   "tools": {
     "playground": {
       "name": "Playground",
-      "description": "Edita y ejecuta código en una vista previa aislada.",
+      "description": "Edita HTML, CSS y JavaScript y comprueba los cambios en directo. Usa la consola para consultar el DOM y probar expresiones sobre tu página.",
       "tags": {
         "main": "HTML CSS JavaScript"
       }
     },
     "gradient": {
       "name": "Gradientes",
-      "description": "Combina colores y genera degradados lineales, radiales o cónicos.",
+      "description": "Coloca las paradas de color y ajusta su opacidad para diseñar un degradado lineal, radial o cónico. Copia el fondo resultante en CSS.",
       "tags": {
         "main": "Gradientes"
       }
     },
     "shadow": {
       "name": "Sombras",
-      "description": "Compón sombras de caja y de texto con varias capas.",
+      "description": "Superpón sombras y ajusta el desplazamiento, el desenfoque y el color de cada capa. Obtén las reglas para aplicarlas a una caja o a un texto.",
       "tags": {
         "main": "Sombras"
       }
     },
     "border": {
       "name": "Bordes y radios",
-      "description": "Diseña marcos, esquinas y contornos con precisión.",
+      "description": "Ajusta el grosor, el estilo y el color de los bordes. Prueba el radio de cada esquina y copia el CSS del marco resultante.",
       "tags": {
         "main": "Bordes y radios"
       }
     },
     "layout": {
       "name": "Grid y Flexbox",
-      "description": "Construye diseños adaptables con CSS Grid y Flexbox.",
+      "description": "Distribuye elementos con Grid o Flexbox. Cambia la alineación y el espacio entre elementos y comprueba cómo se adapta la composición.",
       "tags": {
         "main": "Grid y Flexbox"
       }
     },
     "palette": {
       "name": "Paletas de color",
-      "description": "Explora armonías, escalas cromáticas y contraste.",
+      "description": "Parte de un color para explorar armonías y crear escalas. Comprueba el contraste y prueba la paleta sobre una interfaz clara u oscura.",
       "tags": {
         "main": "Paletas de color"
       }
     },
     "tokens": {
       "name": "Tokens de diseño",
-      "description": "Define los colores, la tipografía y el espaciado de tu sistema.",
+      "description": "Reúne colores, tamaños tipográficos y espaciados en un sistema de diseño. Exporta sus valores para reutilizarlos en distintos componentes.",
       "tags": {
         "main": "Tokens de diseño"
       }
     },
     "transform": {
       "name": "Transformaciones",
-      "description": "Combina transformaciones CSS en dos y tres dimensiones.",
+      "description": "Combina traslaciones, giros y escalas en 2D o 3D. Reordena las operaciones para ver cómo cambia el resultado y copia la transformación CSS.",
       "tags": {
         "main": "Transformaciones"
       }
     },
     "filter": {
       "name": "Filtros",
-      "description": "Ajusta filtros CSS y compara el resultado en una imagen.",
+      "description": "Aplica filtros como desenfoque, brillo o contraste a una imagen. Compara la versión filtrada con la original antes de copiar el CSS.",
       "tags": {
         "main": "Filtros"
       }
     },
     "animation": {
       "name": "Animaciones",
-      "description": "Diseña fotogramas y curvas de animación CSS.",
+      "description": "Define los fotogramas clave, la duración y la curva de una animación. Reproduce el movimiento y exporta las reglas CSS.",
       "tags": {
         "main": "Animaciones"
       }
     },
     "css-minifier": {
       "name": "Minificador CSS",
-      "description": "Limpia y reduce el tamaño de tus hojas de estilo.",
+      "description": "Pega una hoja de estilos para minificarla. Compara el tamaño de entrada y salida y localiza los errores de sintaxis antes de exportar.",
       "tags": {
         "main": "Minificador CSS"
       }
     },
     "json": {
       "name": "JSON",
-      "description": "Formatear, validar y comparar documentos JSON.",
+      "description": "Formatea y valida documentos JSON. Compara dos versiones para localizar diferencias de estructura o de valores.",
       "tags": {
         "main": "JSON"
       }
     },
     "decoder": {
       "name": "Decodificador JWT y URL",
-      "description": "Inspeccionar tokens JWT y parámetros de URL.",
+      "description": "Descompón una URL para editar sus parámetros o inspecciona la cabecera y los datos de un JWT. La lectura del token no verifica su firma.",
       "tags": {
         "main": "Decodificador JWT y URL"
       }
     },
     "mock-data": {
       "name": "Datos de prueba",
-      "description": "Generar conjuntos de datos a partir de un esquema y una semilla.",
+      "description": "Define los campos de un conjunto de datos de prueba. Reutiliza la semilla para generar de nuevo los mismos registros.",
       "tags": {
         "main": "Datos de prueba"
       }
     },
     "lorem": {
       "name": "Lorem y limpieza de texto",
-      "description": "Generar texto de muestra y limpiar caracteres invisibles.",
+      "description": "Genera texto de muestra para una maqueta o limpia texto pegado. Elimina caracteres invisibles antes de llevar el contenido a tu diseño.",
       "tags": {
         "main": "Lorem y limpieza de texto"
       }
     },
     "readability": {
       "name": "Legibilidad",
-      "description": "Analizar la legibilidad y el ancho de línea.",
+      "description": "Prueba un texto con distintos anchos y espaciados. Comprueba cómo cambian la longitud de las líneas y la lectura del párrafo.",
       "tags": {
         "main": "Legibilidad"
       }
     },
     "fluid-type": {
       "name": "Tipografía fluida",
-      "description": "Calcular tamaños fluidos con clamp().",
+      "description": "Indica dos anchos de pantalla y los tamaños que quieres en cada extremo. Obtén una expresión clamp() para tipografía, márgenes u otras medidas.",
       "tags": {
         "main": "Tipografía fluida"
       }
     },
     "type-scale": {
       "name": "Escalas tipográficas",
-      "description": "Construir escalas de tamaños para títulos y texto.",
+      "description": "Elige un tamaño base y una proporción para construir una jerarquía tipográfica. Compara los niveles de títulos con el texto de párrafo.",
       "tags": {
         "main": "Escalas tipográficas"
       }
     },
     "font-pairing": {
       "name": "Combinaciones de fuentes",
-      "description": "Probar parejas tipográficas en títulos y párrafos.",
+      "description": "Combina una fuente para los títulos y otra para el cuerpo. Compara el resultado sobre una muestra de texto antes de aplicar la pareja.",
       "tags": {
         "main": "Combinaciones de fuentes"
       }
     },
     "blob": {
       "name": "Formas orgánicas",
-      "description": "Diseñar contornos orgánicos mediante radios elípticos.",
+      "description": "Ajusta los radios elípticos para crear una forma orgánica. Previsualiza el contorno y reutilízalo con la propiedad border-radius.",
       "tags": {
         "main": "Formas orgánicas"
       }
     },
     "clip-path": {
       "name": "Recortes CSS",
-      "description": "Construir recortes con clip-path.",
+      "description": "Define la silueta que quedará visible en un elemento. Mueve los vértices del recorte y copia la declaración clip-path.",
       "tags": {
         "main": "Recortes CSS"
       }
     },
     "backgrounds": {
       "name": "Fondos y patrones",
-      "description": "Diseñar degradados de malla y patrones SVG.",
+      "description": "Crea fondos con degradados de malla o patrones SVG. Ajusta los colores y exporta el diseño para usarlo en una página.",
       "tags": {
         "main": "Fondos y patrones"
       }
     },
     "svg-optimizer": {
       "name": "Optimizador SVG",
-      "description": "Limpiar y optimizar archivos SVG.",
+      "description": "Carga un SVG y revisa cómo cambia al optimizarlo. Exporta el gráfico resultante o conviértelo en un componente.",
       "tags": {
         "main": "Optimizador SVG"
       }
     },
     "svg-sprite": {
       "name": "Sprites SVG",
-      "description": "Agrupar símbolos SVG y explorar iconos locales.",
+      "description": "Agrupa varios iconos SVG en un sprite de símbolos. Consulta sus identificadores para reutilizar cada icono desde tu HTML.",
       "tags": {
         "main": "Sprites SVG"
       }
     },
     "favicon": {
       "name": "Favicons e iconos PWA",
-      "description": "Preparar iconos y variantes para una aplicación web.",
+      "description": "Parte de una imagen para generar los tamaños de icono de una web o una PWA. Descarga el paquete para incorporarlo al proyecto.",
       "tags": {
         "main": "Favicons e iconos PWA"
       }
     },
     "meta-tags": {
       "name": "Metaetiquetas y Open Graph",
-      "description": "Preparar metadatos y previsualizar tarjetas sociales.",
+      "description": "Edita el título, la descripción y la imagen que aparecerán al compartir una página. Previsualiza la tarjeta social y copia las etiquetas meta.",
       "tags": {
         "main": "Metaetiquetas y Open Graph"
       }
     },
     "table-builder": {
       "name": "Tablas HTML",
-      "description": "Construir tablas accesibles y adaptables.",
+      "description": "Pega datos CSV o TSV o edita las celdas directamente. Genera una tabla HTML con encabezados y configura qué columnas se muestran en pantallas pequeñas.",
       "tags": {
         "main": "Tablas HTML"
       }
     },
     "css-converter": {
       "name": "Conversor CSS",
-      "description": "Convertir reglas CSS a anidamiento nativo, SCSS o Tailwind.",
+      "description": "Convierte CSS plano en CSS anidado, SCSS o reglas de Tailwind con {'@'}apply. Revisa qué selectores cambian y cuáles se conservan antes de generar la salida.",
       "tags": {
         "main": "Conversor CSS"
       }
     },
     "bem": {
       "name": "Conversor BEM",
-      "description": "Organizar clases HTML y CSS con la convención BEM.",
+      "description": "Pega un fragmento HTML para proponer nombres de bloque, elemento y modificador. Ajusta las propuestas y añade tu CSS para actualizar los selectores que tengan una correspondencia inequívoca.",
       "tags": {
         "main": "Conversor BEM"
       }
     },
     "smacss": {
       "name": "Organizador SMACSS",
-      "description": "Clasificar reglas de estilo según SMACSS.",
+      "description": "Clasifica las reglas CSS en base, layout, módulo, estado y tema. Revisa la categoría de cada selector y genera una hoja con capas o un ZIP con los archivos separados.",
       "tags": {
         "main": "Organizador SMACSS"
       }
     },
     "stacking": {
       "name": "Contextos de apilamiento",
-      "description": "Explorar el apilamiento y el comportamiento de position: sticky.",
+      "description": "Experimenta con contextos de apilamiento y position: sticky en escenas interactivas. Identifica qué contenedor determina el orden visual o limita el desplazamiento.",
       "tags": {
         "main": "Contextos de apilamiento"
       }
     },
     "color-converter": {
       "name": "Conversor de color",
-      "description": "Convierte colores CSS y compara gamut y contraste.",
+      "description": "Convierte un color entre formatos CSS y comprueba si cabe en la gama de destino. Compara su contraste con otro color.",
       "tags": {
         "main": "color conversion oklch gamut contraste"
       }
     },
     "encoders": {
       "name": "Codificadores y utilidades de texto",
-      "description": "Trabaja con Base64, URL, entidades, hash, identificadores, fechas y expresiones regulares.",
+      "description": "Codifica y decodifica Base64, URLs y entidades HTML. También puedes calcular hashes, convertir fechas y probar expresiones regulares con texto de muestra.",
       "tags": {
         "main": "base64 url hash uuid regex"
       }
     },
     "css-reset": {
       "name": "Generador de CSS Reset",
-      "description": "Compone un reset a medida y comprueba sus efectos en una página de muestra.",
+      "description": "Elige qué estilos predeterminados del navegador quieres normalizar. Activa las reglas por grupos y compara la muestra antes y después del reset.",
       "tags": {
         "main": "reset preflight normalización"
       }
     },
     "transitions": {
       "name": "Transiciones y animaciones por scroll",
-      "description": "Configura transiciones, desplazamiento por puntos de parada y animaciones vinculadas al scroll.",
+      "description": "Configura transiciones y su temporización. Prueba también puntos de parada del desplazamiento y animaciones vinculadas al scroll.",
       "tags": {
         "main": "transiciones scroll snap timeline"
       }
     },
     "container-queries": {
       "name": "Container Queries y {'@'}scope",
-      "description": "Genera consultas de contenedor y explora ámbitos de CSS.",
+      "description": "Redimensiona un contenedor de prueba y observa cuándo cambian sus estilos. Genera consultas de contenedor y explora cómo delimitar reglas con {'@'}scope.",
       "tags": {
         "main": "container queries scope maquetación"
       }
     },
     "image-optimizer": {
       "name": "Optimizador de imágenes",
-      "description": "Convierte, redimensiona y prepara imágenes adaptables en local.",
+      "description": "Redimensiona y convierte imágenes en tu navegador. Compara el resultado y prepara variantes para servir distintos tamaños según la pantalla.",
       "tags": {
         "main": "imágenes webp avif optimización"
       }
     },
     "a11y-audit": {
       "name": "Auditor de accesibilidad HTML",
-      "description": "Revisa fragmentos HTML y localiza problemas de accesibilidad en la vista previa.",
+      "description": "Analiza un fragmento HTML y localiza los elementos afectados en la vista previa. Revisa los resultados de accesibilidad para decidir qué corregir.",
       "tags": {
         "main": "accesibilidad html axe contraste"
+      }
+    },
+    "html-cleaner": {
+      "name": "Limpiador y conversor HTML",
+      "description": "Pega HTML, carga un archivo o extrae una página desde su URL. Limpia el contenido y compara el original con la salida en HTML, Markdown o texto plano.",
+      "tags": {
+        "main": "html limpiar saneamiento artículo extraer markdown word docs correo conversor"
       }
     }
   }

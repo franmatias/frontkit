@@ -12,9 +12,9 @@ test('links a catalog image to its tool and expands sidebar categories on demand
   await category.click()
   await expect(category).toHaveAttribute('aria-expanded','false')
   const link=page.getByRole('main').getByRole('link',{name:'Gradientes',exact:true})
-  const image=link.locator('img')
+  const image=link.locator('.kit-illustration')
   await image.scrollIntoViewIfNeeded()
-  await expect.poll(()=>image.evaluate((node:HTMLImageElement)=>node.naturalWidth)).toBeGreaterThan(100)
+  await expect(image.locator('svg')).toHaveCount(2)
   await image.click()
   await expect(page).toHaveURL(/\/tools\/gradient$/)
 })
@@ -25,13 +25,13 @@ test('renders a linked image for every catalog item and keeps mobile categories 
   const cards=page.locator('.tool-card .card-link')
   await expect(cards.first()).toBeVisible()
   const previews=await cards.evaluateAll(links=>links.map(link=>({
-    href:link.getAttribute('href'), src:link.querySelector('img')?.currentSrc || link.querySelector('img')?.getAttribute('src'),
+    href:link.getAttribute('href'), art:link.querySelector('.kit-illustration')?.getAttribute('data-kit'),
   })))
   expect(previews.length).toBeGreaterThan(0)
   expect(new Set(previews.map(entry=>entry.href)).size).toBe(previews.length)
   for(const preview of previews){
     expect(preview.href).toMatch(/\/tools\/[\w-]+$/)
-    expect(preview.src).toBeTruthy()
+    expect(preview.href).toMatch(new RegExp('/'+preview.art+'$'))
   }
 
   await page.setViewportSize({width:390,height:800})

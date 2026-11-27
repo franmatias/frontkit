@@ -27,14 +27,25 @@ function guardName(nonce: string) {
 
 export function consoleScript(source: string, nonce: string, protection: boolean) {
   const guard = guardName(nonce)
-  const expression = '(' + source + '\n)'
+  const result = 'window.' + guard + '_result'
+  const expression = '(' + source.trim().replace(/;+\s*$/, '') + '\n)'
   let script: string
   try {
     parse(expression, { ecmaVersion: 'latest' })
-    script = 'window.' + guard + '_result(' + expression + ')'
+    script = result + '(' + expression + ')'
   } catch {
-    parse(source, { ecmaVersion: 'latest' })
-    script = source
+    try {
+      const program = parse(source, { ecmaVersion: 'latest' })
+      const last = program.body.at(-1)
+      if (last?.type === 'ExpressionStatement') {
+        script = source.slice(0, last.start) + ';' + result + '(' +
+          source.slice(last.expression.start, last.expression.end) + '\n)'
+      } else script = source
+    } catch (error) {
+      if (!/\bawait\b/.test(source)) throw error
+      script = result + '((async () => ' + expression + ')())'
+      parse(script, { ecmaVersion: 'latest' })
+    }
   }
   return protection ? protectLoops(script, guard) : script
 }

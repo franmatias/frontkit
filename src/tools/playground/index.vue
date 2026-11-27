@@ -38,7 +38,38 @@ const folded = ref({ html: false, css: false, js: false })
 const layoutIcons = { quad: LayoutGrid, side: PanelRight, left: PanelLeft, columns: Rows2, bottom: PanelsTopLeft, tabs: Columns2 }
 const consoleOpen = ref(true)
 const consoleReady = ref(false)
+const preserveLogs = ref(false)
 const command = ref('')
+const commandInput = ref<HTMLTextAreaElement>()
+const queued = ref('')
+function commandKey(event:KeyboardEvent) {
+  if(event.isComposing)return
+  if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();executeCommand();return}
+  const field=commandInput.value
+  if(field && command.value.includes('\n')){
+    if(event.key==='ArrowUp' && command.value.slice(0,field.selectionStart).includes('\n'))return
+    if(event.key==='ArrowDown' && command.value.slice(field.selectionEnd).includes('\n'))return
+  }
+  historyKey(event)
+}
+const history = ref<string[]>([])
+let historyIndex = -1
+let commandDraft = ''
+const consoleExamples = ["document.title", "document.querySelector('h1')?.textContent", "console.log('Hola', 42)"]
+function historyKey(event: KeyboardEvent) {
+  if (event.isComposing || event.altKey || event.ctrlKey || event.metaKey || !history.value.length) return
+  if (!['ArrowUp','ArrowDown'].includes(event.key)) return
+  if (historyIndex < 0 && event.key === 'ArrowDown') return
+  if (historyIndex < 0) commandDraft = command.value
+  historyIndex = Math.max(-1, Math.min(history.value.length - 1, historyIndex + (event.key === 'ArrowUp' ? 1 : -1)))
+  command.value = historyIndex < 0 ? commandDraft : history.value[historyIndex]!
+  event.preventDefault()
+}
+function chooseCommand(example:string) {
+  command.value=example
+  historyIndex=-1
+  commandInput.value?.focus()
+}
 const consoleOutput = ref<HTMLOListElement>()
 const errors = computed(() => logs.value.filter(row => row.level === 'error'))
 const warnings = computed(() => logs.value.filter(row => row.level === 'warn'))
@@ -83,6 +114,7 @@ let runVersion = 0
 let disposed = false
 let savedBeforeLink: Project | undefined
 let saveTimer: ReturnType<typeof setTimeout> | undefined
+let refreshingPreview = false
 let runTimer: ReturnType<typeof setTimeout> | undefined
 let tabId = crypto.randomUUID() as string
 try {
@@ -182,6 +214,7 @@ async function toggleFullscreen() {
 }
 
 function clearPreview() {
+  queued.value = ''
   clearTimeout(runTimer)
   runVersion++
   consoleReady.value = false
@@ -263,8 +296,9 @@ async function run() {
   const doc = previewDocument(sourceOnly(project.value), token, store.data.editor.loopProtection, label('loop'))
   try { await write('meta', flag, true) } catch { return }
   if (disposed || revision !== runVersion) return
-  logs.value = []
+  if (!preserveLogs.value) logs.value = []
   consoleReady.value = false
+  refreshingPreview = false
   nonce = token
   result.value = doc.parsed ? '' : label('parse')
   previewHtml.value = doc.html
@@ -274,14 +308,18 @@ watch([ready, blocked, shared, () => project.value.id, () => project.value.html,
   clearTimeout(runTimer)
   runVersion++
   if (ready.value && !blocked.value && !shared.value) {
-    runTimer = setTimeout(() => { void run() }, store.data.editor.autoRunDelayMs)
+    refreshingPreview = true
+    consoleReady.value = false
+    runTimer = setTimeout(() => { runTimer=undefined;void run() }, store.data.editor.autoRunDelayMs)
   }
 })
 function receive(event: MessageEvent) {
   const msg = event.data
   if (!nonce || event.source !== preview.value?.contentWindow || !msg || msg.nonce !== nonce || typeof msg.text !== 'string') return
   if (msg.level === 'ready') {
+    if (refreshingPreview) return
     consoleReady.value = true
+    if(queued.value){const source=queued.value;queued.value='';dispatchCommand(source)}
     void remove('meta', flag).catch(() => {})
     return
   }
@@ -297,10 +335,18 @@ function appendLog(level: Level | 'command', text: string) {
 }
 function executeCommand() {
   const source = command.value.trim()
-  const frame = preview.value?.contentWindow
-  if (!source || !consoleReady.value || !frame) return
-  appendLog('command', source)
+  if (!source || queued.value || (!consoleReady.value && (blocked.value || shared.value))) return
+  if(!consoleReady.value) queued.value=source
+  else dispatchCommand(source)
+  if (history.value[0] !== source) history.value = [source,...history.value].slice(0,50)
+  historyIndex = -1
   command.value = ''
+  void nextTick(()=>commandInput.value?.focus())
+}
+function dispatchCommand(source:string){
+  const frame=preview.value?.contentWindow
+  if(!frame)return
+  appendLog('command',source)
   try {
     const script = consoleScript(source, nonce, store.data.editor.loopProtection)
     frame.postMessage({ nonce, command: script }, '*')
@@ -502,16 +548,22 @@ onUnmounted(() => {
         </section>
       </div>
       <p v-if="result" class="notice" role="status">{{ result }}</p>
-      <section class="console-pane"><button class="console-title" type="button" :aria-expanded="consoleOpen" aria-controls="play-console" @click="consoleOpen = !consoleOpen"><Terminal :size="17" />{{ label('console') }}<small>{{ errors.length }} {{ label('errors') }} · {{ warnings.length }} {{ label('warnings') }}</small><ChevronDown :size="16" /></button>
+      <section class="console-pane"><button class="console-title" type="button" :aria-expanded="consoleOpen" aria-controls="play-console" @click="consoleOpen = !consoleOpen"><Terminal :size="17" />{{ label('console') }}<span class="console-state" :class="{connected:consoleReady}">{{ label(consoleReady ? 'consoleReady' : 'consoleWaiting') }}</span><small>{{ errors.length }} {{ label('errors') }} · {{ warnings.length }} {{ label('warnings') }}</small><ChevronDown :size="16" /></button>
         <div v-show="consoleOpen" id="play-console">
-        <div class="actions project-actions"><label>{{ label('level') }}<select v-model="filter"><option value="">{{ t('app.all') }}</option><option v-for="level in levels.filter(l => l !== 'clear')" :key="level">{{ level }}</option></select></label>
+        <div class="actions console-tools"><label>{{ label('level') }}<select v-model="filter"><option value="">{{ t('app.all') }}</option><option v-for="level in levels.filter(l => l !== 'clear')" :key="level">{{ level }}</option></select></label>
           <input v-model="search" type="search" :placeholder="label('search')" :aria-label="label('search')" />
+          <label class="check"><input type="checkbox" v-model="preserveLogs" />{{label('preserveLogs')}}</label>
           <button class="btn" type="button" @click="logs = []">{{ label('clear') }}</button></div>
-        <ol ref="consoleOutput" class="console-output"><li v-for="row in shown" :key="row.id"><strong :class="'log-' + row.level">{{ row.level === 'command' ? '›' : row.level }}</strong> {{ row.text }}</li></ol>
+        <p v-if="!shown.length" class="console-empty">{{ label(logs.length ? 'consoleNoMatch' : 'consoleEmpty') }}</p>
+        <ol v-show="shown.length" ref="consoleOutput" class="console-output" :aria-label="label('consoleMessages')"><li v-for="row in shown" :key="row.id"><strong :class="'log-' + row.level">{{ row.level === 'command' ? '›' : row.level }}</strong> {{ row.text }}</li></ol>
         <form class="console-command" @submit.prevent="executeCommand">
-          <input v-model="command" type="text" :disabled="!ready" :aria-label="label('command')" :placeholder="label('command')" autocomplete="off" spellcheck="false" maxlength="8000" />
-          <button class="btn" type="submit" :disabled="!consoleReady || !command.trim()">{{ label('executeCommand') }}</button>
+          <span class="console-prompt" aria-hidden="true">›</span>
+          <textarea ref="commandInput" v-model="command" rows="2" :disabled="!ready" aria-describedby="console-tip" @keydown="commandKey" @input="historyIndex = -1" :aria-label="label('command')" :placeholder="label('command')" autocomplete="off" spellcheck="false" maxlength="8000" />
+          <button class="btn" type="submit" :disabled="!ready || (!consoleReady && (blocked || shared)) || !!queued || !command.trim()">{{ label('executeCommand') }}</button>
         </form>
+        <p v-if="queued" role="status" class="console-tip">{{label('queued')}}</p>
+        <p id="console-tip" class="console-tip">{{ label('consoleTip') }}</p>
+        <div class="actions console-examples"><small>{{label('examplesLabel')}}</small><button v-for="example in consoleExamples" :key="example" type="button" class="btn pill" @click="chooseCommand(example)"><code>{{example}}</code></button></div>
         <span class="sr-only" aria-live="polite">{{ errors.at(-1)?.text }}</span>
         </div>
       </section>
@@ -590,10 +642,29 @@ onUnmounted(() => {
 .play-tabs.active-folded { grid-template-rows:auto 1fr; }
 .console-pane { min-width:0;border:1px solid var(--line);border-radius:10px;padding:.25rem .65rem;background:var(--surface); }
 .console-title { width:100%;padding-inline:0; }
-.console-title small { font-weight:400;color:var(--muted); }
+.console-title { flex-wrap:wrap; }
+.console-title small,.console-tip { font-weight:400;color:var(--muted);font-size:.74rem; }
+.console-state { background:var(--sidebar);color:var(--muted);padding:.14rem .38rem;border-radius:.38rem;font-size:.7rem; }
+.console-state.connected { color:var(--accent);background:var(--accent-soft); }
+.console-tools { padding:.45rem 0; }
+.console-empty { background:var(--sidebar);padding:.75rem;border-radius:.55rem;color:var(--muted);font-size:.82rem; }
+.console-examples { margin:.4rem 0 .55rem; }
+.console-examples button { max-width:100%;overflow-wrap:anywhere;text-align:left; }
+.console-prompt { color:var(--accent);font:700 1.4rem/1.7 monospace; }
 .console-output { min-height:2rem;max-height:12rem;overflow:auto;font:.85rem/1.55 ui-monospace,monospace;overflow-wrap:anywhere;white-space:pre-wrap; }
 .console-command { display:flex;gap:.5rem;padding:.5rem 0; }
-.console-command input { flex:1;min-width:0;font-family:ui-monospace,monospace; }
+.console-command { align-items:center;border:1px solid var(--line);border-radius:.6rem;background:var(--surface);padding:.35rem .55rem; }
+.console-command:focus-within { outline:2px solid var(--accent);outline-offset:1px; }
+.console-command textarea { flex:1;min-width:0;resize:vertical;min-height:2.4rem;font:.9rem/1.5 ui-monospace,monospace;border:0;background:transparent;color:inherit;padding:.2rem; }
+.console-command textarea:focus { outline:none; }
+.console-pane { overflow:hidden;padding:0;background:var(--sidebar); }
+.console-title { padding:.65rem .8rem;border-bottom:1px solid var(--line);background:var(--surface); }
+#play-console { padding:.45rem .75rem .65rem;display:grid;gap:.4rem; }
+.console-output,.console-empty { margin:0;min-height:5rem;background:var(--surface);border-radius:.45rem;border:1px solid var(--line);padding:.45rem .65rem; }
+.console-output { list-style:none; }.console-output strong { display:inline-block;min-width:3rem; }
+.console-examples small { color:var(--muted); }.console-tip { margin:0; }
+.console-tools input[type=search] { flex:1;min-width:8rem; }.console-tools { flex-wrap:wrap; }
+.console-output li { border-bottom:1px solid var(--line);padding:.22rem .4rem; }
 .console-output strong { color:var(--accent); }.console-output .log-error { color:var(--danger); }
 :is(.studio:fullscreen,.studio.is-immersive) { display:flex;flex-direction:column;overflow:auto;overscroll-behavior:contain;background:var(--page);color:var(--text);width:100%;height:100%;padding:clamp(.6rem,2vw,1.5rem);box-sizing:border-box; }
 .studio.is-immersive { position:fixed;inset:0;z-index:1000;height:100dvh; }

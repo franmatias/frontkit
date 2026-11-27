@@ -2,12 +2,11 @@
 import { ArrowUpRight, Search, Star } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import KitIllustration from '../components/shared/KitIllustration.vue'
 import { categories } from '../core/registry'
 import { useToolsStore } from '../stores/tools'
 const { t } = useI18n()
 const store = useToolsStore()
-const pictures = import.meta.glob<string>('../assets/catalog/*.jpg', { eager: true, query: '?url', import: 'default' })
-const picture = (id: string) => pictures['../assets/catalog/' + id + '.jpg']
 const groups = computed(() => [
   { key: 'home.available', items: store.filteredTools.filter(tool => tool.status !== 'coming-soon') },
   { key: 'home.planned', items: store.filteredTools.filter(tool => tool.status === 'coming-soon') },
@@ -41,8 +40,7 @@ const groups = computed(() => [
       <article v-for="tool in group.items" :key="tool.id" class="tool-card" :class="{ 'planned-card': tool.status === 'coming-soon' }">
         <RouterLink :to="{ name: tool.id }" class="card-link">
           <span class="card-art">
-            <img v-if="picture(tool.id)" :src="picture(tool.id)" alt="" loading="lazy" decoding="async" width="630" height="354" />
-            <component v-else :is="tool.icon" :size="34" aria-hidden="true" />
+            <KitIllustration :tool="tool" />
           </span>
           <h3>{{ t('tools.' + tool.id + '.name') }} <ArrowUpRight :size="17" aria-hidden="true" /></h3>
         </RouterLink>

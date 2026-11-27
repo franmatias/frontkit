@@ -1,0 +1,14 @@
+.regex-reference { min-width:0;padding:1rem }
+.regex-reference h2 { display:flex;align-items:center;gap:.55rem;margin:0;font-size:1.1rem }
+.regex-reference h2 svg { flex:none;color:var(--accent) }
+.regex-reference > p { margin:.4rem 0 .85rem;color:var(--muted);font-size:.9rem }
+.regex-card-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr));gap:.65rem }
+.regex-card { display:grid;align-content:start;gap:.45rem;min-width:0;padding:.78rem;border:1px solid var(--line);border-radius:.75rem;background:var(--page) }
+.regex-card header { display:flex;align-items:start;justify-content:space-between;gap:.5rem }
+.regex-card h3 { margin:0;font-size:.9rem }
+.regex-card p { margin:0;color:var(--muted);font-size:.84rem;line-height:1.55;overflow-wrap:anywhere }
+.regex-card code { min-width:0;max-width:100%;padding:.15rem .42rem;border:1px solid var(--line);border-radius:.38rem;background:var(--accent-soft);color:var(--accent);font-weight:700;overflow-wrap:anywhere;white-space:pre-wrap }
+.regex-card small { color:var(--muted);font-weight:650;font-size:.7rem;text-align:end }
+.regex-card[data-kind='quantifier'] code { color:var(--regex-quantifier) }
+.regex-card[data-kind='class'] code { color:var(--regex-set) }
+.regex-card[data-kind='escape'] code,.regex-card[data-kind='reference'] code { color:var(--regex-escape) }

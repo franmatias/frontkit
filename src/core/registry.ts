@@ -1,4 +1,4 @@
-import { Braces, Type, Images, Workflow, Activity, Blend, Box, Code2, Layers3, LayoutGrid, Minimize2, Palette, ScanLine, SlidersHorizontal, SwatchBook } from 'lucide-vue-next'
+import { Regex, Braces, Type, Images, Workflow, Activity, Blend, Box, Code2, Layers3, LayoutGrid, Minimize2, Palette, ScanLine, SlidersHorizontal, SwatchBook } from 'lucide-vue-next'
 import type { Component } from 'vue'
 
 export type ToolCategory = 'code' | 'color-tokens' | 'layout' | 'effects' | 'animation' | 'optimization' | 'data' | 'typography' | 'assets' | 'html' | 'refactor'
@@ -29,6 +29,13 @@ export const tools: ToolDefinition[] = [
     supportsTailwind: false, supportsShareUrl: true,
     minViewport: 'tablet', tags: ['tools.playground.tags.main'],
     component: () => import('../tools/playground/index.vue').then(module => module.default),
+  },
+  {
+    id: 'regex-kit', category: 'code', icon: Regex, phase: 11,
+    status: 'beta', featured: false, sensitive: true, inputKind: 'text',
+    supportsTailwind: false, supportsShareUrl: false,
+    minViewport: 'mobile', tags: ['tools.regex-kit.tags.main'],
+    component: () => import('../tools/regex-kit/index.vue').then(module => module.default),
   },
   {
     id: 'gradient', category: 'color-tokens', icon: Blend, phase: "1a",

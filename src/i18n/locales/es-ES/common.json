@@ -212,6 +212,13 @@
     "expand": "Desplegar {title}"
   },
   "tools": {
+    "regex-kit": {
+      "name": "Expresiones regulares",
+      "description": "Escribe y prueba expresiones regulares de JavaScript. Inspecciona coincidencias, grupos e índices y copia el patrón o el código generado.",
+      "tags": {
+        "main": "Regex · patrones · validación"
+      }
+    },
     "playground": {
       "name": "Playground",
       "description": "Edita HTML, CSS y JavaScript y comprueba los cambios en directo. Usa la consola para consultar el DOM y probar expresiones sobre tu página.",

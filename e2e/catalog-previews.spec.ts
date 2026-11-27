@@ -45,3 +45,27 @@ test('renders a linked image for every catalog item and keeps mobile categories 
   await expect(page).toHaveURL(/\/tools\/gradient$/)
   await expect(page.getByRole('dialog')).toHaveCount(0)
 })
+
+test('opens RegexKit from the catalog and the Code category on desktop and mobile', async ({ page }) => {
+  await page.goto('./')
+  const name = 'Expresiones regulares'
+  const route = /\/tools\/regex-kit$/
+  const card = page.getByRole('main').getByRole('link', { name, exact: true })
+  await expect(card.locator('[data-kit="regex-kit"]')).toBeVisible()
+  await card.click()
+  await expect(page).toHaveURL(route)
+  await expect(page.getByRole('heading', { name, exact: true })).toBeVisible()
+  await page.goto('./')
+  const sidebar = page.locator('aside nav')
+  await sidebar.getByRole('button', { name: 'Código', exact: true }).click()
+  await sidebar.getByRole('link', { name, exact: true }).click()
+  await expect(page).toHaveURL(route)
+  await page.setViewportSize({ width: 390, height: 800 })
+  await page.goto('./')
+  await page.getByRole('button', { name: 'Menú', exact: true }).click()
+  const menu = page.getByRole('dialog').getByRole('navigation')
+  await menu.getByRole('button', { name: 'Código', exact: true }).click()
+  await menu.getByRole('link', { name, exact: true }).click()
+  await expect(page).toHaveURL(route)
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+})

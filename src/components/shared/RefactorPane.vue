@@ -3,7 +3,7 @@ import { Braces, ChevronDown, CodeXml, ListChecks, SlidersHorizontal } from 'luc
 import { ref, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-defineProps<{ title: string; kind: 'css' | 'html' | 'options' | 'review' }>()
+defineProps<{ title: string; compactTitle?: string; kind: 'css' | 'html' | 'options' | 'review' }>()
 const icons = { css: Braces, html: CodeXml, options: SlidersHorizontal, review: ListChecks }
 const open = ref(true)
 const bodyId = useId()
@@ -13,10 +13,10 @@ const { t } = useI18n()
 <template>
   <section class="refactor-pane" :class="{ folded: !open }">
     <header class="pane-bar">
-      <h2><button type="button" class="pane-toggle" :aria-expanded="open" :aria-controls="bodyId"
+      <h2><button type="button" class="pane-toggle" :aria-expanded="open" :aria-controls="bodyId" :aria-label="compactTitle ? title : undefined"
         :title="t(open ? 'refactor.collapse' : 'refactor.expand', { title })" @click="open = !open">
         <component :is="icons[kind]" :size="17" class="kind" aria-hidden="true" />
-        <span>{{ title }}</span><ChevronDown :size="16" class="chevron" aria-hidden="true" />
+        <span class="pane-title">{{ title }}</span><span v-if="compactTitle" class="pane-compact-title" aria-hidden="true">{{ compactTitle }}</span><ChevronDown :size="16" class="chevron" aria-hidden="true" />
       </button></h2>
       <slot name="action" />
     </header>
@@ -31,6 +31,7 @@ const { t } = useI18n()
 .pane-bar h2 { margin:0; flex:1; min-width:0; }
 .pane-toggle { display:flex; align-items:center; gap:.55rem; width:100%; padding:.5rem .2rem; color:var(--text); font-size:.92rem; font-weight:650; text-align:start; }
 .pane-toggle:hover,.kind { color:var(--accent); }
+.pane-compact-title { display:none; }
 .chevron { margin-inline-start:auto; flex:none; }
 .folded .chevron { transform:rotate(-90deg); }
 .pane-body { border-top:1px solid var(--line); }

@@ -19,6 +19,7 @@ FrontKit es una suite de herramientas front-end que se ejecuta en el navegador. 
 | Gradientes | `/tools/gradient` | Beta |
 | Sombras | `/tools/shadow` | Beta |
 | Bordes y radios | `/tools/border` | Beta |
+| Expresiones regulares | `/tools/regex-kit` | Beta |
 | Playground | `/tools/playground` | Beta |
 | Grid y Flexbox | `/tools/layout` | Beta |
 | Paletas de color | `/tools/palette` | Beta |
@@ -52,6 +53,14 @@ El catálogo de fuentes versionado funciona sin API en tiempo de ejecución. Par
 El optimizador puede conservar perfiles ICC RGB al convertir entre PNG, JPEG y WebP. El ajuste es opcional y los datos EXIF se descartan tras aplicar la orientación.
 
 El limpiador procesa el HTML localmente y usa DOMPurify como segunda capa. La extracción directa requiere CORS. Se puede elegir Jina Reader para recuperar el HTML renderizado, AllOrigins para recuperar el original o un proxy HTTPS propio que acepte el parámetro `url`. La dirección se envía al servicio elegido al pulsar el botón de extracción. El HTML queda en memoria por defecto y se puede recordar en este navegador desde Configuración. Los enlaces compartidos solo incluyen las opciones.
+
+[RegexKit](./src/tools/regex-kit/RegexKit.vue) evalúa el patrón en un Web Worker con un límite de un segundo. El texto de trabajo permanece en memoria hasta que se guarda explícitamente con **Mis plantillas**. Las plantillas personales incluyen el patrón, las banderas y el texto de prueba. Se pueden cargar, editar y eliminar y forman parte de la copia de seguridad de FrontKit. Debajo del texto de prueba, la guía rápida muestra tarjetas de sintaxis y ejemplos interactivos. El desglose léxico explica el patrón en orden mientras se escribe. La transformación en vivo admite sustitución literal, referencias a capturas y cambios de mayúsculas o minúsculas.
+
+En otro componente de FrontKit, vincula un estado reactivo con `pattern`, `flags` y `text`. `match` emite la lista con sus índices y capturas. `error` emite el mensaje de evaluación.
+
+```vue
+<RegexKit v-model="regexState" @match="onMatch" @error="onError" />
+```
 
 ## Desarrollo
 

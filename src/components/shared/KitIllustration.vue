@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { Activity, Binary, BookOpenText, Braces, Brush, ClipboardList, Code2, Combine, FileCode2, FileImage, FileSearch, FileText, Focus, FoldVertical, Globe, Grid2X2, Image, Layers3, ListFilter, Move, PaintBucket, PanelTop, Pipette, RectangleHorizontal, ScanLine, ShieldCheck, Sparkles, SwatchBook, Table2, Timer, Type, WashingMachine } from 'lucide-vue-next'
+import { Activity, Binary, BookOpenText, Braces, Brush, ClipboardList, Code2, Combine, FileCode2, FileImage, FileSearch, FileText, Focus, FoldVertical, Globe, Grid2X2, Image, Layers3, ListFilter, Move, PaintBucket, PanelTop, Pipette, RectangleHorizontal, Regex, ScanLine, ShieldCheck, Sparkles, SwatchBook, Table2, Timer, Type, WashingMachine } from 'lucide-vue-next'
 import type { Component } from 'vue'
 import type { ToolDefinition } from '../../core/registry'
 const props = defineProps<{ tool: ToolDefinition }>()
 const icons: Record<string, Component> = {
-  playground: Code2, gradient: PaintBucket, shadow: Layers3, border: RectangleHorizontal, layout: Grid2X2,
+  playground: Code2, 'regex-kit': Regex, gradient: PaintBucket, shadow: Layers3, border: RectangleHorizontal, layout: Grid2X2,
   palette: SwatchBook, tokens: Braces, transform: Move, filter: ListFilter, animation: Activity,
   'css-minifier': FoldVertical, json: Braces, decoder: Binary, 'mock-data': ClipboardList,
   lorem: FileText, readability: BookOpenText, 'fluid-type': Type, 'type-scale': Type, 'font-pairing': BookOpenText,
